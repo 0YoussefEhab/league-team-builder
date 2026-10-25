@@ -1,0 +1,24 @@
+@model LeagueLaneSlidersModel
+@using LeagueTeamBuilder.Services
+@*
+    The five lane sliders (Step 8f, from the PROFILE view of docs/league-overview-mockup.html). One range input per lane,
+    named TopLevel / JungleLevel / MidLevel / AdcLevel / SupportLevel (they bind to the form). 1 = barely play it
+    (counts as "not played"), 5 = my favourite. Works without JavaScript (the number still posts); league-profile.js
+    (enhanceLevels) adds the live word, the filled track and, on the profile page, the live pyramid and champion pickers.
+*@
+<div class="lg-sliders" data-lg-levels>
+    @foreach (var lane in LeagueLaneLevels.AllLanes)
+    {
+        var lv = Model.Levels.TryGetValue(lane, out var v) ? LeagueLaneLevels.Clamp(v) : LeagueLaneLevels.Min;
+        var id = "lg-lv-" + lane.ToString().ToLowerInvariant();
+        <div class="lg-sl" data-lg-sl="@lane" data-lane-label="@LeagueViewText.LaneName(lane)">
+            <label class="lg-sl-nm" for="@id">@LeagueViewText.LaneName(lane)</label>
+            <div>
+                <input id="@id" type="range" min="1" max="5" step="1" name="@(lane)Level" value="@lv" class="lg-range" style="--p:@((lv - 1) * 25)%" />
+                <div class="lg-ticks" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+            </div>
+            <output class="lg-sl-out" for="@id">@LeagueLaneLevels.Word(lv)</output>
+        </div>
+    }
+</div>
+<p class="lg-sl-note">1 = barely play it, 5 = my favourite. 4-5 = Mains, 3 = Kinda good, 1-2 = Basics. The Team builder and Clash use these numbers, so a player who is only "kinda good" at a lane is not thrown against a real main of it. A lane at 1 counts as not played.</p>

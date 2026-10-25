@@ -1,0 +1,231 @@
+@model LeagueHistoryPageModel
+@using LeagueTeamBuilder.Services
+@{
+    ViewData["Title"] = "Match history";
+    var query = Model.Query;
+    // Step 8h: every link keeps the kind, mode, search and player filters; only the status pill and the page change.
+    string FilterUrl(LeagueHistoryFilter f, int page = 1) =>
+        Url.Action("History", "League", new Microsoft.AspNetCore.Routing.RouteValueDictionary(LeagueHistoryService.RouteValues(query, page, f))) ?? "#";
+    string ClearUrl() =>
+        Url.Action("History", "League", new Microsoft.AspNetCore.Routing.RouteValueDictionary(
+            query.Filter == LeagueHistoryFilter.All ? new Dictionary<string, object?>() : new Dictionary<string, object?> { ["filter"] = LeagueHistoryService.FilterKey(query.Filter) })) ?? "#";
+    string StatusText(string s) => s switch { "submitted" => "Submitted", "live" => "Live", _ => "Done" };
+    var cfg = new
+    {
+        deleteUrl = Url.Action("Delete", "LeagueMatch"),
+        editResultUrl = Url.Action("EditResult", "LeagueMatch"),
+        editDateUrl = Url.Action("EditDate", "LeagueMatch"),
+        statsUrl = Url.Action("Stats", "LeagueMatch"),
+        importUrl = Url.Action("ImportStats", "LeagueMatch"),
+        setMvpUrl = Url.Action("SetMvp", "LeagueMatch"),
+        backfillUrl = Url.Action("BackfillMvps", "LeagueMatch"),
+        historyUrl = Url.Action("History", "League"),
+        exportUrl = Url.Action("Render", "LeagueExport", new { kind = "day" }),
+        todayKey = Model.ExportTodayKey,
+        yesterdayKey = Model.ExportYesterdayKey,
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-history.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-result-image.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Poppins:wght@800;900&display=swap" rel="stylesheet">
+}
+
+@* New design (PLAN-league-restyle.md, Step R4). Same data, same links, same wording; only the page shell, the filter
+   container and the stylesheet changed. The popup is the server-rendered _MatchDetail partial (unchanged markup). *@
+<div class="lg-page lgh-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Match <em>history</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"history"' />
+    <p class="lg-sub">Every match saved from the team builder, newest first. Open one to see both teams, the ranks they were balanced on and when it was submitted, started and finished.</p>
+
+    @if (Model.CanExport)
+    {
+        @* Step 12f: pictures of a whole day for Discord (league-export-day.js). A day with no drawable game greys its button out. *@
+        <div class="lgx-bar">
+            <button type="button" class="lg-btn lg-btn-ghost" data-lgx-open="today" disabled="@(Model.ExportTodayCount == 0)">@(Model.ExportTodayCount == 0 ? "No matches today" : "Export today's matches")</button>
+            <button type="button" class="lg-btn lg-btn-ghost" data-lgx-open="yesterday" disabled="@(Model.ExportYesterdayCount == 0)">@(Model.ExportYesterdayCount == 0 ? "No matches yesterday" : "Export yesterday's matches")</button>
+            <button type="button" class="lg-btn lg-btn-ghost" data-lgx-open="pick">Pick a day</button>
+        </div>
+    }
+
+    @if (Model.CanRecomputeMvps)
+    {
+        @* MVP redesign Step 5e: re-runs the MVP rule on every finished match. Hand-picked MVPs are kept. Safe to press again. *@
+        <div class="lgx-bar lgh-recompute">
+            <button type="button" class="lg-btn lg-btn-ghost" id="lgh-recompute">Recompute MVPs</button>
+            <span class="lg-sub lg-flush" id="lgh-recompute-msg" role="status" aria-live="polite">Applies the current MVP rule to every finished match. MVPs picked by hand are kept.</span>
+        </div>
+    }
+
+    @Html.AntiForgeryToken()
+    <partial name="_LeagueSendConfig" />
+
+    @* Step 8h: kind, mode and a search for a player or a champion. A plain GET form, so it works without JavaScript. *@
+    <form method="get" asp-controller="League" asp-action="History" class="lgh-search" role="search">
+        @if (query.Filter != LeagueHistoryFilter.All)
+        {
+            <input type="hidden" name="filter" value="@LeagueHistoryService.FilterKey(query.Filter)" />
+        }
+        @if (query.PlayerId is int keepPlayer)
+        {
+            <input type="hidden" name="player" value="@keepPlayer" />
+        }
+        <label class="lgh-sr" for="lgh-q">Search matches</label>
+        <input id="lgh-q" name="q" type="search" class="lg-input lgh-q" maxlength="@LeagueHistoryService.MaxSearchLength" placeholder="Search a player or a champion" value="@query.Search" />
+        <label class="lgh-sr" for="lgh-kind">Kind</label>
+        <select id="lgh-kind" name="kind" class="lg-select lgh-sel">
+            <option value="" selected="@(query.Kind == LeagueHistoryKind.All)">All matches</option>
+            <option value="custom" selected="@(query.Kind == LeagueHistoryKind.Custom)">Custom</option>
+            <option value="clash" selected="@(query.Kind == LeagueHistoryKind.Clash)">Clash</option>
+        </select>
+        <label class="lgh-sr" for="lgh-mode">Mode</label>
+        <select id="lgh-mode" name="mode" class="lg-select lgh-sel">
+            <option value="" selected="@(query.Mode == LeagueHistoryMode.All)">All modes</option>
+            <option value="draft" selected="@(query.Mode == LeagueHistoryMode.Draft)">Draft</option>
+            <option value="aram" selected="@(query.Mode == LeagueHistoryMode.Aram)">ARAM</option>
+            <option value="arena" selected="@(query.Mode == LeagueHistoryMode.Arena)">Arena</option>
+        </select>
+        <button class="lg-btn" type="submit">Search</button>
+        @if (query.HasExtra)
+        {
+            <a class="lg-btn lg-btn-ghost" href="@ClearUrl()">Clear</a>
+        }
+    </form>
+
+    @if (query.PlayerId != null)
+    {
+        <p class="lgh-who">Matches of <strong>@Model.PlayerName</strong>. <a href="@Url.Action("History", "League", new Microsoft.AspNetCore.Routing.RouteValueDictionary(LeagueHistoryService.RouteValues(new LeagueHistoryQuery { Filter = query.Filter, Kind = query.Kind, Mode = query.Mode, Search = query.Search })))">Show all players</a></p>
+    }
+
+    <nav class="lg-nav lgh-filters" aria-label="Filter matches">
+        <a class="lg-pill" aria-current="@(Model.Filter == LeagueHistoryFilter.All ? "page" : null)" href="@FilterUrl(LeagueHistoryFilter.All)">All</a>
+        <a class="lg-pill" aria-current="@(Model.Filter == LeagueHistoryFilter.Done ? "page" : null)" href="@FilterUrl(LeagueHistoryFilter.Done)">Finished</a>
+        <a class="lg-pill" aria-current="@(Model.Filter == LeagueHistoryFilter.Open ? "page" : null)" href="@FilterUrl(LeagueHistoryFilter.Open)">Open</a>
+        <a class="lg-pill" aria-current="@(Model.Filter == LeagueHistoryFilter.Missing ? "page" : null)" href="@FilterUrl(LeagueHistoryFilter.Missing)">Missing stats<span class="lgh-count" aria-label="@Model.MissingCount matches">@Model.MissingCount</span></a>
+    </nav>
+
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="lg-card lgh-empty">
+            @if (query.HasExtra)
+            {
+                <span>No matches match these filters.</span>
+            }
+            else if (Model.Filter == LeagueHistoryFilter.All)
+            {
+                <span>No matches yet. Submit teams from the team builder and they will be listed here.</span>
+            }
+            else if (Model.Filter == LeagueHistoryFilter.Missing)
+            {
+                <span>Every finished match has stats for all of its players.</span>
+            }
+            else
+            {
+                <span>No matches in this view.</span>
+            }
+        </div>
+    }
+    else
+    {
+        <ul class="lgh-list">
+            @foreach (var r in Model.Rows)
+            {
+                <li>
+                    <a class="lgh-row" role="button" href="@Url.Action("MatchDetail", "League", new { id = r.Id })" data-lgh-open>
+                        <span class="lgh-when"><time data-lgh-time datetime="@LeagueHistoryFormat.Iso(r.PlayedUtc)">@LeagueHistoryFormat.PlainCairo(r.PlayedUtc)</time></span>
+                        <span class="lgh-main">
+                            <span class="lgh-title">
+                                <strong>@r.ModeName</strong>
+                                <span class="lgh-badge">@(r.IsClash ? "Clash" : "Custom")</span>
+                                @if (r.AddedLater)
+                                {
+                                    <span class="lgh-badge lgh-badge-later" title="The result was entered more than 6 hours after the match was played.">Added later</span>
+                                }
+                                @if (r.ClashTeamName != null)
+                                {
+                                    <span class="lgh-badge">@r.ClashTeamName</span>
+                                }
+                                @if (r.GameLabel != null)
+                                {
+                                    <span class="lgh-badge">@r.GameLabel</span>
+                                }
+                                <span class="lgh-badge lgh-st-@r.Status">@StatusText(r.Status)</span>
+                                @if (r.MissingStats)
+                                {
+                                    <span class="lgh-badge lgh-st-missing">Stats missing</span>
+                                }
+                            </span>
+                            @if (r.IsClash)
+                            {
+                                @* A Clash game: the event title first; the Opponents team has no players, so the count is the Clash team's. *@
+                                <span class="lgh-teams">@(r.ClashTitle != null ? r.ClashTitle + " \u00b7 " : "")@r.PlayerCount @(r.PlayerCount == 1 ? "player" : "players")</span>
+                            }
+                            else
+                            {
+                                <span class="lgh-teams">@string.Join(" vs ", r.TeamNames) &middot; @r.PlayerCount players</span>
+                            }
+                        </span>
+                        <span class="lgh-res">
+                            @if (r.Status == "done" && r.WinnerName != null)
+                            {
+                                <span>@r.WinnerName won</span>
+                                @if (r.Kills0 != null && r.Kills1 != null)
+                                {
+                                    <span class="lgh-score">@r.Kills0 &ndash; @r.Kills1</span>
+                                }
+                            }
+                            else if (r.Status == "done")
+                            {
+                                <span>Finished</span>
+                            }
+                            else if (r.Status == "live")
+                            {
+                                <span>In progress</span>
+                            }
+                            else
+                            {
+                                <span>Waiting to start</span>
+                            }
+                        </span>
+                    </a>
+                </li>
+            }
+        </ul>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="lgh-pager" aria-label="Pages">
+                @if (Model.Page > 1)
+                {
+                    <a class="lg-btn lg-btn-ghost" rel="prev" href="@FilterUrl(Model.Filter, Model.Page - 1)">Newer</a>
+                }
+                <span>Page @Model.Page of @Model.TotalPages</span>
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <a class="lg-btn lg-btn-ghost" rel="next" href="@FilterUrl(Model.Filter, Model.Page + 1)">Older</a>
+                }
+            </nav>
+        }
+    }
+
+    <div id="lgh-toast" class="lgh-toast" role="status" aria-live="polite"></div>
+    <dialog id="lgh-dlg" class="lgh-dlg" aria-labelledby="lgh-dlg-title"></dialog>
+
+    <script type="application/json" id="lgh-data">@Json.Serialize(cfg)</script>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-time.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="~/js/league-send.js" asp-append-version="true"></script>
+    <script src="~/js/league-result-image.js" asp-append-version="true"></script>
+    <script src="~/js/league-stats-import.js" asp-append-version="true"></script>
+    <script src="~/js/league-history.js" asp-append-version="true"></script>
+    <script src="~/js/league-export-day.js" asp-append-version="true"></script>
+}

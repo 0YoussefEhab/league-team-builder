@@ -1,0 +1,38 @@
+@model LeagueGuestEditPageModel
+@*
+    Fields shared by the "add guest" form and the "edit guest" page (Step 3). Rank pickers use the same
+    _RankSelect partial as member profiles, so they work without JavaScript and get the badge list
+    from league-profile.js. The peak is "same as current" unless that box is unticked.
+*@
+@{
+    var f = Model.Form;
+    string Err(string key) => Model.Errors.TryGetValue(key, out var m) ? m : string.Empty;
+}
+<div class="lg-field">
+    <label class="lg-lbl" for="InGameName">Guest name</label>
+    <input id="InGameName" name="InGameName" class="lg-input" maxlength="40" required value="@f.InGameName" />
+    @if (Err("InGameName") != "") { <p class="lg-field-err" role="alert">@Err("InGameName")</p> }
+</div>
+
+@* Step 8f: five 1-5 lane sliders replace "main lane" and "other lanes". The main lane is the highest level. *@
+<div class="lg-field lg-lanelevels">
+    <span class="lg-lbl">How much does the guest play each lane?</span>
+    @if (Err("Lanes") != "") { <p class="lg-field-err" role="alert">@Err("Lanes")</p> }
+    <partial name="_LeagueLaneSliders" model="new LeagueLaneSlidersModel(f.Levels())" />
+</div>
+
+<div class="lg-field">
+    <partial name="_RankSelect" model='new LeagueRankSelectModel("Current rank", "CurTier", f.CurTier, "CurDiv", f.CurDiv)' />
+    @if (Err("Rank") != "") { <p class="lg-field-err" role="alert">@Err("Rank")</p> }
+    @if (Err("CurDiv") != "") { <p class="lg-field-err" role="alert">@Err("CurDiv")</p> }
+</div>
+
+<div class="lg-field">
+    <label class="lg-check"><input type="checkbox" name="PeakSameAsCur" value="true" data-lg-peak-toggle checked="@f.PeakSameAsCur" /> Peak rank is the same as the current rank</label>
+    <input type="hidden" name="PeakSameAsCur" value="false" />
+    <div data-lg-peak-wrap>
+        <partial name="_RankSelect" model='new LeagueRankSelectModel("Peak rank", "PeakTier", f.PeakTier, "PeakDiv", f.PeakDiv)' />
+    </div>
+    @if (Err("PeakDiv") != "") { <p class="lg-field-err" role="alert">@Err("PeakDiv")</p> }
+    @if (Err("Peak") != "") { <p class="lg-field-err" role="alert">@Err("Peak")</p> }
+</div>

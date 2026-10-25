@@ -1,0 +1,154 @@
+@model LeaguePlayerStats
+@{
+    // Step 8e: the Player page reuses this partial for someone else's numbers. ViewData flags, all optional, the
+    // default output (My league profile) is unchanged: LgsOther = third person wording, LgsTitle = the heading,
+    // LgsDetail = skip the Games and Win rate tiles (the page already shows them above).
+    var other = ViewData["LgsOther"] is true;
+    var detail = ViewData["LgsDetail"] is true;
+    var title = ViewData["LgsTitle"] as string ?? "My league stats";
+}
+@*
+    Step 5d: "My league stats" on the league profile page. Read-only. Counts only finished matches this profile
+    played; a number is shown only when it exists, with how many matches it comes from (spec section 14).
+*@
+@* New design (PLAN-league-restyle.md, Step R2): same numbers and wording; hero tile, ranked lists with a bar. *@
+<section class="lg-card lgs" aria-labelledby="lgs-title">
+    <div class="lg-th"><h2 class="lg-h2" id="lgs-title">@title</h2></div>
+
+    @if (Model.Games == 0)
+    {
+        @if (other)
+        {
+            <p class="lg-sub">No finished matches yet. K/D/A, champions and lanes appear here once a match this player took part in is finished.</p>
+        }
+        else
+        {
+            <p class="lg-sub">No finished matches yet. Your games, win rate and K/D/A appear here once a match you played is finished.</p>
+        }
+    }
+    else
+    {
+        <div class="lgs-tiles">
+            @if (!detail)
+            {
+            <div class="lgs-tile lgs-hero">
+                <span class="lgs-val">@Model.Games</span>
+                <span class="lgs-lbl">Finished @(Model.Games == 1 ? "match" : "matches")</span>
+            </div>
+            @* MVP redesign Step 5d: the old all-matches win rate tile is replaced by one tile per group (custom draft, Clash); never added together. *@
+            @foreach (var g in new[] { (Name: "Custom draft", S: Model.Buckets.Draft), (Name: "Clash", S: Model.Buckets.Clash) })
+            {
+                <div class="lgs-tile">
+                    @if (g.S.WinRate is int gw)
+                    {
+                        <span class="lgs-val">@gw%</span>
+                        <span class="lgs-lbl">@g.Name win rate &middot; @g.S.Wins W - @g.S.Losses L</span>
+                    }
+                    else
+                    {
+                        <span class="lgs-val">-</span>
+                        <span class="lgs-lbl">@g.Name win rate</span>
+                    }
+                    <span class="lgs-note">@g.S.Mvps @(g.S.Mvps == 1 ? "MVP" : "MVPs") &middot; @LeagueStatsFormat.Matches(g.S.Games)@(g.S.Decided == 0 ? " · no result yet" : "")</span>
+                </div>
+            }
+            }
+            <div class="lgs-tile">
+                @if (Model.KdaMatches > 0)
+                {
+                    <span class="lgs-val">@LeagueStatsFormat.One(Model.AvgKills) / @LeagueStatsFormat.One(Model.AvgDeaths) / @LeagueStatsFormat.One(Model.AvgAssists)</span>
+                    <span class="lgs-lbl">Average K / D / A</span>
+                    <span class="lgs-note">based on @LeagueStatsFormat.Matches(Model.KdaMatches)</span>
+                }
+                else
+                {
+                    <span class="lgs-val">-</span>
+                    <span class="lgs-lbl">Average K / D / A</span>
+                    <span class="lgs-note">no K/D/A entered yet</span>
+                }
+            </div>
+            <div class="lgs-tile">
+                @if (Model.KdaRatio != null)
+                {
+                    <span class="lgs-val">@Model.KdaRatio</span>
+                    <span class="lgs-lbl">KDA ratio &middot; (K + A) / D</span>
+                    <span class="lgs-note">based on @LeagueStatsFormat.Matches(Model.KdaMatches)</span>
+                }
+                else
+                {
+                    <span class="lgs-val">-</span>
+                    <span class="lgs-lbl">KDA ratio</span>
+                    <span class="lgs-note">no K/D/A entered yet</span>
+                }
+            </div>
+        </div>
+
+        @if (Model.Recent.Count > 0)
+        {
+            <div class="lgs-recent-wrap">
+                <span class="lgs-lbl">Last @Model.Recent.Count, newest first</span>
+                <ol class="lgs-recent" aria-label="Recent results, newest first">
+                    @foreach (var r in Model.Recent)
+                    {
+                        <li class="@(r == "W" ? "lgs-w" : r == "L" ? "lgs-l" : "lgs-u")"
+                            title="@(r == "W" ? "Win" : r == "L" ? "Loss" : "No winner recorded")">@r</li>
+                    }
+                </ol>
+            </div>
+        }
+
+        <div class="lgs-cols">
+            <div>
+                <h3 class="lgs-h3">Most played champions</h3>
+                @if (Model.Champions.Count == 0)
+                {
+                    <p class="lgs-empty">No champion entered for @(other ? "their" : "your") matches yet.</p>
+                }
+                else
+                {
+                    var maxChampGames = Model.Champions.Max(x => x.Games);
+                    var champRank = 0;
+                    <ol class="lgs-list">
+                        @foreach (var c in Model.Champions)
+                        {
+                            champRank++;
+                            <li>
+                                <span class="lgs-rank" aria-hidden="true">@champRank</span>
+                                @if (c.IconUrl != null)
+                                {
+                                    <img src="@c.IconUrl" alt="" width="24" height="24" loading="lazy" />
+                                }
+                                <span class="lgs-name">@c.Name</span>
+                                <span class="lgs-meta">@c.Games @(c.Games == 1 ? "game" : "games")@(c.WinRate is int w ? " · " + w + "% wins" : "")</span>
+                                <span class="lgs-bar" aria-hidden="true"><i style="--lgs-w:@(maxChampGames > 0 ? (int)Math.Round(100.0 * c.Games / maxChampGames) : 0)%"></i></span>
+                            </li>
+                        }
+                    </ol>
+                    <p class="lgs-note">based on @LeagueStatsFormat.Matches(Model.ChampionMatches) with a champion entered</p>
+                }
+            </div>
+            <div>
+                <h3 class="lgs-h3">Lanes played</h3>
+                @if (Model.Lanes.Count == 0)
+                {
+                    <p class="lgs-empty">@(other ? "Their" : "Your") matches had no lanes (ARAM and Arena have none).</p>
+                }
+                else
+                {
+                    var maxLaneGames = Model.Lanes.Max(x => x.Games);
+                    <ul class="lgs-list">
+                        @foreach (var l in Model.Lanes)
+                        {
+                            <li>
+                                <span class="lgs-name">@l.Label</span>
+                                <span class="lgs-meta">@l.Games @(l.Games == 1 ? "game" : "games")@(l.WinRate is int w2 ? " · " + w2 + "% wins" : "")</span>
+                                <span class="lgs-bar" aria-hidden="true"><i style="--lgs-w:@(maxLaneGames > 0 ? (int)Math.Round(100.0 * l.Games / maxLaneGames) : 0)%"></i></span>
+                            </li>
+                        }
+                    </ul>
+                    <p class="lgs-note">based on @LeagueStatsFormat.Matches(Model.LaneMatches) with a lane</p>
+                }
+            </div>
+        </div>
+    }
+</section>

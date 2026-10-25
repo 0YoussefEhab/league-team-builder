@@ -1,0 +1,40 @@
+@model LeagueGuestEditPageModel
+@{
+    ViewData["Title"] = "Edit league guest";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R5). Same data, same forms and field names, same wording; only the page shell and classes changed. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Edit <em>guest</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Guests">&larr; Guests</a></p>
+
+    @if (Model.Errors.Count > 0)
+    {
+        <div class="lg-alert lg-err" role="alert">Please fix the highlighted fields and save again.</div>
+    }
+
+    <form method="post" asp-action="EditGuest" class="lg-card">
+        <input type="hidden" name="Id" value="@Model.Form.Id" />
+        <div class="lg-fieldgrid">
+            <partial name="_LeagueGuestFields" model="Model" />
+        </div>
+        <div class="lg-savebar lg-gap">
+            <a class="lg-btn lg-btn-ghost" asp-action="Guests">Cancel</a>
+            <button class="lg-btn" type="submit">Save guest</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-profile.js" asp-append-version="true"></script>
+    <script src="~/js/league-settings.js" asp-append-version="true"></script>
+}

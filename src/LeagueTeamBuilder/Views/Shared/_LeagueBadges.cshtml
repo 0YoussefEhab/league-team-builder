@@ -1,0 +1,18 @@
+@model LeagueBadgeModel
+@*
+    The badges (Step 8g, from the mockup): "#1 Rank" (gold crown), "MVP King" (purple star) and, from Step 13, "Clash Winner" (teal cup,
+    the players of the latest won Clash). Draws nothing when none is set. Icon = icon only for tight places (the tooltip and the screen-reader label still say what it is).
+    Who holds them: LeagueBadges (one #1 rank, one top MVP, ties share). Styles: league.css, section 13.
+*@
+@if (Model.Rank)
+{
+    <span class="lg-bd lg-bd-rank@(Model.Icon ? " lg-bd-icon" : "")" title="#1 ranked player in the server" role="img" aria-label="#1 ranked player in the server"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 18l-1-11 5 4 5-8 5 8 5-4-1 11z"/><rect x="3" y="19.5" width="18" height="2" rx="1"/></svg>@if (!Model.Icon){<span>#1 Rank</span>}</span>
+}
+@if (Model.Clash)
+{
+    <span class="lg-bd lg-bd-clash@(Model.Icon ? " lg-bd-icon" : "")" title="Won the latest Clash" role="img" aria-label="Won the latest Clash"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 3h10v5a5 5 0 0 1-10 0zM5 4H2v2a4 4 0 0 0 4 4zM19 4h3v2a4 4 0 0 1-4 4zM11 13h2v4h3v2H8v-2h3z"/></svg>@if (!Model.Icon){<span>Clash Winner</span>}</span>
+}
+@if (Model.Mvp)
+{
+    <span class="lg-bd lg-bd-mvp@(Model.Icon ? " lg-bd-icon" : "")" title="Most MVPs in the server" role="img" aria-label="Most MVPs in the server"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7L5.8 21l1.6-7L2 9.2l7.1-.6z"/></svg>@if (!Model.Icon){<span>MVP King</span>}</span>
+}

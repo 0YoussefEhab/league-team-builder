@@ -1,0 +1,576 @@
+@model LeagueMatchDetailModel
+@using LeagueTeamBuilder.Models
+@*
+    One match, read-only (Step 5a, docs/LEAGUE_BUILD_SPEC.md section 8). Used inside the History dialog
+    and by the full MatchDetail page. Step 5b adds the Edit result form and Step 5c the Add / edit stats form (both hidden until opened). Data that was not recorded is simply not drawn.
+*@
+@{
+    string StatusText(string s) => s switch { "submitted" => "Submitted", "live" => "Live", _ => "Done" };
+    var teamClass = Model.Teams.Count == 2 ? "lgh-teams2" : "lgh-teamsN";
+    string[] laneNames = { "Top", "Jungle", "Mid", "ADC", "Support" };
+    var champListId = "lgh-champs-" + Model.Id;
+}
+<article class="lgh-md" data-match-id="@Model.Id">
+    <header class="lgh-md-head">
+        <h3 id="lgh-dlg-title">@Model.ModeName</h3>
+        <p class="lgh-md-meta">
+            <span class="lgh-badge">@(Model.IsClash ? "Clash" : "Custom")</span>
+            <span class="lgh-badge lgh-st-@Model.Status">@StatusText(Model.Status)</span>
+            <time data-lgh-time data-lgh-played-time datetime="@LeagueHistoryFormat.Iso(Model.PlayedUtc)">@LeagueHistoryFormat.PlainCairo(Model.PlayedUtc)</time>
+            @if (Model.AddedLater)
+            {
+                <span class="lgh-badge lgh-badge-later" title="The result was entered more than 6 hours after the match was played.">Added later</span>
+            }
+            @if (Model.ClashTeamName != null)
+            {
+                <span class="lgh-badge">@Model.ClashTeamName</span>
+            }
+            @if (Model.GameLabel != null)
+            {
+                <span class="lgh-badge">@Model.GameLabel</span>
+            }
+            @if (Model.DurationSeconds is int secs)
+            {
+                <span>@(secs / 60) min @(secs % 60) s</span>
+            }
+        </p>
+        @if (Model.ClashTitle != null)
+        {
+            <p class="lgh-md-event">@Model.ClashTitle</p>
+        }
+        @if (Model.SeriesText != null)
+        {
+            <p class="lgh-md-series">@(Model.ClashTeamName != null ? Model.ClashTeamName + " record" : "Series record"): <strong>@Model.SeriesText</strong></p>
+        }
+        @if (Model.WinnerName != null)
+        {
+            <p class="lgh-md-winner">Winner: <strong>@Model.WinnerName</strong></p>
+        }
+        @if (Model.EditedUtc is DateTime edited)
+        {
+            <p class="lgh-md-edited">Last edited <time data-lgh-time datetime="@LeagueHistoryFormat.Iso(edited)">@LeagueHistoryFormat.PlainCairo(edited)</time></p>
+        }
+    </header>
+
+    <div class="lgh-md-teams @teamClass">
+        @foreach (var team in Model.Teams)
+        {
+            <section class="@("lgh-team" + (team.IsWinner ? " is-winner" : ""))" aria-label="@team.Name">
+                <h4>
+                    @team.Name
+                    @if (team.IsWinner)
+                    {
+                        <span class="lgh-badge lgh-st-done">Winner</span>
+                    }
+                    @if (team.Kills != null)
+                    {
+                        <span class="lgh-kills">@team.Kills kills</span>
+                    }
+                </h4>
+                @if (team.IsEmpty)
+                {
+                    @* No players on this team (the Opponents of a Clash game): say so instead of drawing an empty list. *@
+                    <p class="lgh-team-empty">No players recorded for this team.</p>
+                }
+                else
+                {
+                    <ol class="lgh-players">
+                        @foreach (var p in team.Players)
+                        {
+                            <li class="lgh-pl">
+                                @if (p.AvatarUrl != null)
+                                {
+                                    <img class="lgh-av" src="@p.AvatarUrl" alt="" width="32" height="32" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="lgh-av lgh-av-init" aria-hidden="true">@p.Initial</span>
+                                }
+                                <span class="lgh-pl-main">
+                                    <span class="lgh-pl-name">
+                                        @p.Name
+                                        @if (p.IsGuest)
+                                        {
+                                            <span class="lgh-tag">Guest</span>
+                                        }
+                                        @foreach (var tag in p.MvpTags)
+                                        {
+                                            <span class="lgh-tag lgh-tag-mvp">@tag</span>
+                                        }
+                                    </span>
+                                    <span class="lgh-pl-sub">
+                                        @if (p.LaneLabel != null)
+                                        {
+                                            <span>@(p.LaneLabel + (p.PlayedLaneLabel != null ? " (played " + p.PlayedLaneLabel + ")" : ""))</span>
+                                        }
+                                        @if (p.ChampionName != null)
+                                        {
+                                            <span class="lgh-champ">
+                                                @if (p.ChampionIconUrl != null)
+                                                {
+                                                    <img src="@p.ChampionIconUrl" alt="" width="18" height="18" loading="lazy" />
+                                                }
+                                                @p.ChampionName
+                                            </span>
+                                        }
+                                    </span>
+                                    @if (p.ExtraText != null)
+                                    {
+                                        <span class="lgh-extra">@p.ExtraText</span>
+                                    }
+                                    @if (p.OtherText != null)
+                                    {
+                                        <span class="lgh-extra lgh-extra-other">@p.OtherText</span>
+                                    }
+                                    @if (p.Notes != null)
+                                    {
+                                        <span class="lgh-note">@p.Notes</span>
+                                    }
+                                </span>
+                                @if (p.RankKey != null)
+                                {
+                                    <span class="lgh-rank" title="@(p.PeakRankLabel != null ? "Peak: " + p.PeakRankLabel : "")">
+                                        <img src="~/img/ranks/@(p.RankKey).png" alt="" height="24" />
+                                        <span>@p.RankLabel</span>
+                                    </span>
+                                }
+                                @if (p.Kda != null)
+                                {
+                                    <span class="lgh-kda" title="Kills / Deaths / Assists">@p.Kda</span>
+                                }
+                            </li>
+                        }
+                    </ol>
+                }
+                @if (team.TotalsText != null)
+                {
+                    <p class="lgh-totals">
+                        @team.TotalsText
+                        @if (team.StatPlayers < team.Players.Count)
+                        {
+                            <span class="lgh-muted">(from @team.StatPlayers of @team.Players.Count players)</span>
+                        }
+                    </p>
+                }
+            </section>
+        }
+    </div>
+
+    @if (Model.MvpLines.Count > 0)
+    {
+        @* Step 8a3: the MVPs of this match (only the ones that exist; nothing is guessed when stats are missing). *@
+        <section class="lgh-md-sec lgh-mvp" aria-label="MVPs">
+            <h4>MVPs @if (Model.MvpIsManual) { <span class="lgh-tag">Picked by an admin</span> }</h4>
+            <ul class="lgh-mvp-list">
+                @foreach (var line in Model.MvpLines)
+                {
+                    <li>
+                        <span class="lgh-mvp-lbl">@line.Label</span> <strong>@line.Name</strong>
+                        @if (line.Why != null)
+                        {
+                            @* Step 7: why this player, in plain words. *@
+                            <span class="lgh-mvp-why">@line.Why</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="lgh-md-sec" aria-label="Timeline">
+        <h4>Timeline</h4>
+        <ol class="lgh-timeline">
+            @foreach (var step in Model.Timeline)
+            {
+                <li>
+                    <span>@step.Label</span>
+                    <time data-lgh-time datetime="@LeagueHistoryFormat.Iso(step.Utc)">@LeagueHistoryFormat.PlainCairo(step.Utc)</time>
+                </li>
+            }
+        </ol>
+    </section>
+
+    @if (Model.BuilderLog != null)
+    {
+        <section class="lgh-md-sec" aria-label="Builder notes">
+            <h4>Builder notes</h4>
+            <p class="lgh-log">@Model.BuilderLog</p>
+        </section>
+    }
+
+    @if (Model.CanEditDate)
+    {
+        @* Results/export step 1: LeagueMatch > EditDate. Cairo time in, UTC stored. Day exports use this date. *@
+        <form class="lgh-edit lgh-date" data-lgh-dateform aria-label="Played on">
+            <h4>Played on</h4>
+            <label class="lg-lbl">
+                Date and time <span class="lg-opt">(Cairo time)</span>
+                <input class="lg-input" type="datetime-local" data-lgh-played value="@Model.PlayedOnInput" required />
+            </label>
+            <p class="lgh-hint">Entered later? Set the real date and time. Today's and yesterday's exports use this date.</p>
+            <p class="lgh-md-err" data-lgh-dateerr role="alert"></p>
+            <div class="lgh-md-acts">
+                <button type="button" class="lg-btn" data-lgh-datesave="@Model.Id">Save date</button>
+            </div>
+        </form>
+    }
+
+    @if (Model.CanEditResult)
+    {
+        <form class="lgh-edit" data-lgh-editform hidden aria-label="Edit result">
+            <h4>Edit result</h4>
+            <fieldset class="lgh-edit-win">
+                <legend>Winner</legend>
+                @foreach (var team in Model.Teams)
+                {
+                    <label class="lg-check">
+                        <input type="radio" name="lgh-winner-@Model.Id" value="@team.Index" checked="@(Model.WinnerIndex == team.Index)" />
+                        @team.Name
+                    </label>
+                }
+            </fieldset>
+            @if (Model.Teams.Count == 2)
+            {
+                <div class="lgh-edit-kills">
+                    @foreach (var team in Model.Teams)
+                    {
+                        <label class="lg-lbl">
+                            @team.Name kills <span class="lg-opt">(optional)</span>
+                            <input class="lg-input" type="number" min="0" max="999" inputmode="numeric" data-lgh-kills="@team.Index" value="@team.Kills" />
+                        </label>
+                    }
+                </div>
+            }
+            <p class="lgh-md-err" data-lgh-editerr role="alert"></p>
+            <div class="lgh-md-acts">
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-editcancel>Cancel</button>
+                <button type="button" class="lg-btn" data-lgh-save="@Model.Id">Save result</button>
+            </div>
+        </form>
+    }
+
+    @if (Model.CanSetMvp)
+    {
+        @* Step 8a3: admin pick. The server refuses a pick whose team has not got the stats it needs. *@
+        <form class="lgh-edit" data-lgh-mvpform hidden aria-label="Set MVPs">
+            <h4>Set MVPs</h4>
+            <p class="lgh-hint">
+                A K/D/A pick needs kills, deaths and assists for the whole team. An all-stats pick needs every stat for the whole team.
+                A pick made here stays until you press "Back to automatic".
+            </p>
+            @{
+                var mvpSelects = new (string Key, string Label, List<LeagueMvpOption> Options, int? Current)[]
+                {
+                    ("mvp", "Match MVP (K/D/A)", Model.WinnerOptions, Model.MvpId),
+                    ("statsMvp", "Match MVP (all stats)", Model.WinnerOptions, Model.StatsMvpId),
+                    ("teamMvp", "Team MVP (K/D/A), losing team", Model.LoserOptions, Model.TeamMvpId),
+                    ("statsTeamMvp", "Team MVP (all stats), losing team", Model.LoserOptions, Model.StatsTeamMvpId),
+                };
+            }
+            <div class="lgh-mvp-grid">
+                @foreach (var s in mvpSelects)
+                {
+                    if (s.Options.Count == 0) { continue; }
+                    <label class="lg-lbl">@s.Label
+                        <select class="lg-select" data-lgh-mvp="@s.Key">
+                            <option value="" selected="@(s.Current == null)">Nobody</option>
+                            @foreach (var o in s.Options)
+                            {
+                                <option value="@o.ProfileId" selected="@(s.Current == o.ProfileId)">@o.Name</option>
+                            }
+                        </select>
+                    </label>
+                }
+            </div>
+            <p class="lgh-md-err" data-lgh-mvperr role="alert"></p>
+            <div class="lgh-md-acts">
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-mvpcancel>Cancel</button>
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-mvpauto="@Model.Id">Back to automatic</button>
+                <button type="button" class="lg-btn" data-lgh-mvpsave="@Model.Id">Save MVPs</button>
+            </div>
+        </form>
+    }
+
+    @if (Model.CanEditStats)
+    {
+        @* Step 5c: one table per team, one Save for the whole match (spec section 14). Every box is optional.
+           The champion is picked from a searchable list (no free typing); the extra stats sit in a row that opens with "+". *@
+        var colCount = Model.HasLanes ? 6 : 5;
+        var extras = new (string Key, string Label, int Max)[]
+        {
+            ("cs", "CS", 9999), ("dd", "Damage dealt", 999999), ("dt", "Damage taken", 999999),
+            ("gold", "Gold", 999999), ("vis", "Vision score", 999), ("obj", "Objective damage", 999999),
+        };
+        <form class="lgh-stats" data-lgh-statsform hidden aria-label="Add or edit stats">
+            <h4>Add / edit stats</h4>
+            <p class="lgh-hint">
+                Fill in what you know; a half-filled match is fine, and an empty box clears that value.
+                Tab moves across a row. Press + on a row for CS, damage, gold, vision, objective damage and a note.
+                @if (Model.HasLanes)
+                {
+                    <text>The lane starts as the lane from the team builder: change it if the player played elsewhere.</text>
+                }
+            </p>
+            <p class="lgh-imp-ok" data-lgh-fillnote role="status"></p>
+
+            <div class="lgh-st-opts">
+                <fieldset class="lgh-st-dur">
+                    <legend>Match length <span class="lg-opt">(optional)</span></legend>
+                    <label class="lgh-st-durbox">
+                        <input class="lg-input lgh-st-num" type="number" min="0" max="999" inputmode="numeric" data-lgh-dmin
+                               value="@(Model.DurationSeconds is int ds ? (ds / 60).ToString() : "")" aria-label="Match length, minutes" /> min
+                    </label>
+                    <label class="lgh-st-durbox">
+                        <input class="lg-input lgh-st-num" type="number" min="0" max="59" inputmode="numeric" data-lgh-dsec
+                               value="@(Model.DurationSeconds is int ds2 ? (ds2 % 60).ToString() : "")" aria-label="Match length, seconds" /> s
+                    </label>
+                </fieldset>
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-moreall aria-pressed="false">Show extra stats for everyone</button>
+            </div>
+
+            @foreach (var team in Model.Teams.Where(t => !t.IsEmpty))
+            {
+                <div class="lgh-st-wrap">
+                    <table class="lgh-st-table">
+                        <caption>@team.Name</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Player</th>
+                                <th scope="col">Champion</th>
+                                @if (Model.HasLanes)
+                                {
+                                    <th scope="col">Lane played</th>
+                                }
+                                <th scope="col" title="Kills">K</th>
+                                <th scope="col" title="Deaths">D</th>
+                                <th scope="col" title="Assists">A</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in team.Players)
+                            {
+                                var lane = p.PlayedLane ?? p.Lane;
+                                var hasExtra = p.ExtraText != null || p.Notes != null || p.OtherStats.Count > 0;
+                                <tr data-lgh-prow="@p.PlayerId">
+                                    <th scope="row" class="lgh-st-name">
+                                        <button type="button" class="lgh-st-more" data-lgh-more aria-expanded="@(hasExtra ? "true" : "false")"
+                                                aria-label="Extra stats for @p.Name" title="Extra stats">@(hasExtra ? "-" : "+")</button>
+                                        <span class="lgh-st-pname">@p.Name</span>
+                                    </th>
+                                    <td>
+                                        <div class="lgh-cb" data-lgh-cb>
+                                            <input type="hidden" data-lgh-champ value="@p.ChampionId" />
+                                            <button type="button" class="lg-select lgh-cb-btn" data-lgh-cbbtn aria-haspopup="listbox" aria-expanded="false"
+                                                    aria-label="Champion of @p.Name"><span data-lgh-cblabel>@(p.ChampionName ?? "Pick champion")</span></button>
+                                        </div>
+                                    </td>
+                                    @if (Model.HasLanes)
+                                    {
+                                        <td>
+                                            <select class="lg-select" data-lgh-lane aria-label="Lane played by @p.Name">
+                                                <option value="" selected="@(lane == null)">-</option>
+                                                @for (var i = 0; i < laneNames.Length; i++)
+                                                {
+                                                    <option value="@i" selected="@(lane == i)">@laneNames[i]</option>
+                                                }
+                                            </select>
+                                        </td>
+                                    }
+                                    <td><input class="lg-input lgh-st-num" type="number" min="0" max="999" inputmode="numeric" data-lgh-k value="@p.Kills" aria-label="Kills of @p.Name" /></td>
+                                    <td><input class="lg-input lgh-st-num" type="number" min="0" max="999" inputmode="numeric" data-lgh-d value="@p.Deaths" aria-label="Deaths of @p.Name" /></td>
+                                    <td><input class="lg-input lgh-st-num" type="number" min="0" max="999" inputmode="numeric" data-lgh-a value="@p.Assists" aria-label="Assists of @p.Name" /></td>
+                                </tr>
+                                <tr class="lgh-st-extra" data-lgh-extrarow hidden="@(!hasExtra)">
+                                    <td colspan="@colCount">
+                                        <div class="lgh-st-xgrid">
+                                            @foreach (var x in extras)
+                                            {
+                                                int? xv = x.Key switch
+                                                {
+                                                    "cs" => p.Cs, "dd" => p.DamageDealt, "dt" => p.DamageTaken,
+                                                    "gold" => p.Gold, "vis" => p.VisionScore, _ => p.ObjectiveDamage,
+                                                };
+                                                <label class="lg-lbl">@x.Label
+                                                    <input class="lg-input" type="number" min="0" max="@x.Max" inputmode="numeric"
+                                                           data-lgh-x="@x.Key" value="@xv" aria-label="@x.Label of @p.Name" />
+                                                </label>
+                                            }
+                                            <label class="lg-lbl lgh-st-xnote">Note
+                                                <input class="lg-input" type="text" maxlength="200" data-lgh-x="notes" value="@p.Notes" aria-label="Note for @p.Name" />
+                                            </label>
+                                        </div>
+                                        @* Step 13d: the other stats (wards, turret damage...) kept in ExtraJson. Filled from the screenshots answer; a chip can be removed. *@
+                                        <div class="lgh-st-other" data-lgh-other hidden="@(p.OtherStats.Count == 0)">
+                                            <span class="lgh-st-otherlbl">Other stats</span>
+                                            <ul class="lgh-chips" data-lgh-chips>
+                                                @foreach (var os in p.OtherStats)
+                                                {
+                                                    <li class="lgh-chip" data-lgh-chip="@os.Name" data-lgh-chipval="@os.Value">
+                                                        <span class="lgh-chip-txt">@os.Label @os.Value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</span>
+                                                        <button type="button" class="lgh-chip-x" data-lgh-chipx aria-label="Remove @os.Label of @p.Name" title="Remove">&times;</button>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            @* Step 8: stat sanity check. Filled by league-history.js; it only warns (the button turns into "Save anyway"). *@
+            <div class="lgh-md-warn" data-lgh-statswarn role="status"></div>
+            <p class="lgh-md-err" data-lgh-statserr role="alert"></p>
+            <div class="lgh-md-acts">
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-statscancel>Cancel</button>
+                <button type="button" class="lg-btn" data-lgh-statssave="@Model.Id">Save stats</button>
+            </div>
+        </form>
+    }
+
+    @if (Model.CanEditStats || Model.CanImportStats)
+    {
+        @* The champion list and the champion picker are shared by the stats form (Step 5c) and the "Fill from screenshots" panel (Step 13b).
+           The controller loads the list for either permission. *@
+        <script type="application/json" data-lgh-champs>@Json.Serialize(Model.Champions)</script>
+        <div class="lgh-cb-panel" data-lgh-cbpanel hidden>
+            <input type="search" class="lg-input" data-lgh-cbsearch placeholder="Search champions" autocomplete="off" aria-label="Search champions" role="combobox" aria-expanded="true" aria-controls="lgh-cb-list" />
+            <ul id="lgh-cb-list" class="lgh-cb-list" role="listbox" data-lgh-cblist aria-label="Champions"></ul>
+        </div>
+    }
+
+    @if (Model.ResultImage != null)
+    {
+        <script type="application/json" data-lri-spec="@Model.Id">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ResultImage, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)))</script>
+    }
+
+    @if (Model.CanImportStats)
+    {
+        @* Step 13a: step 1 of "Fill from screenshots": the name each player has in the game (the part of the Riot ID before the #).
+           A player with no name gets a box; a name that is already saved is shown and cannot be changed here. *@
+        var impPlayers = Model.Teams.Where(t => !t.IsEmpty).SelectMany(t => t.Players).ToList();
+        <section class="lgh-imp" data-lgh-impform hidden aria-label="Fill from screenshots">
+            <h4>Fill from screenshots</h4>
+            <p class="lgh-hint">
+                Step 1: the name each player has in the game, exactly as it shows on the scoreboard (the part of the Riot ID before the #).
+                Type the ones that are missing; they are saved on the player's league profile, so you only type each name once.
+                A name that is already saved is not changed here.
+            </p>
+            <p class="lgh-imp-count" data-lgh-impcount>@(impPlayers.Count(p => p.GameName != null)) of @(impPlayers.Count) players have a game name.</p>
+            @foreach (var team in Model.Teams.Where(t => !t.IsEmpty))
+            {
+                <div data-lgh-impteam="@team.Name">
+                    <h5 class="lgh-imp-team">@team.Name</h5>
+                    <ul class="lgh-imp-list">
+                        @foreach (var p in team.Players)
+                        {
+                            <li data-lgh-improw="@p.PlayerId" data-lane="@(p.PlayedLaneLabel ?? p.LaneLabel)">
+                                <span class="lgh-imp-site">@p.Name</span>
+                                @if (p.GameName != null)
+                                {
+                                    <span class="lgh-imp-game">@p.GameName</span>
+                                }
+                                else if (p.ProfileId == null)
+                                {
+                                    <span class="lgh-imp-none">no league profile any more</span>
+                                }
+                                else
+                                {
+                                    <input type="text" class="lg-input" data-lgh-impname maxlength="64" autocomplete="off"
+                                           placeholder="Name in the game" aria-label="Game name of @p.Name" />
+                                }
+                                <div class="lgh-cb lgh-imp-champ" data-lgh-cb>
+                                    <input type="hidden" data-lgh-champ value="@p.ChampionId" />
+                                    <button type="button" class="lg-select lgh-cb-btn" data-lgh-cbbtn aria-haspopup="listbox" aria-expanded="false"
+                                            aria-label="Champion of @p.Name (optional)"><span data-lgh-cblabel>@(p.ChampionName ?? "Pick champion")</span></button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            <p class="lgh-md-err" data-lgh-imperr role="alert"></p>
+            <p class="lgh-imp-ok" data-lgh-impok role="status"></p>
+
+            <h5 class="lgh-imp-step">Step 2: the prompt</h5>
+            <p class="lgh-hint">
+                Optional: pick the champion of a player above when you know it, so the AI does not have to guess it from the small icon.
+                Press <strong>Copy prompt</strong>, paste it into your own AI chat together with the screenshots of the post-game screen
+                (the Scoreboard tab and the pages of the Stats tab), then copy the answer. Reading the answer comes in the next step.
+            </p>
+            <p class="lgh-imp-ok" data-lgh-impcopyok role="status"></p>
+            <label class="lg-lbl lgh-imp-fall" data-lgh-impfall hidden>Your browser did not allow copying. Select the text and copy it yourself (Ctrl+C):
+                <textarea class="lg-input" rows="8" readonly data-lgh-imptext aria-label="The prompt"></textarea>
+            </label>
+            <div class="lgh-md-acts">
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-impcancel>Close</button>
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-impsave="@Model.Id">Save names</button>
+                <button type="button" class="lg-btn" data-lgh-impcopy>Copy prompt</button>
+            </div>
+
+            @if (Model.CanEditStats)
+            {
+                @* Step 13c: step 3. Needs LeagueMatch > Stats as well, because it fills the stats form (Step 5c) and nothing is saved here. *@
+                <h5 class="lgh-imp-step">Step 3: the answer</h5>
+                <p class="lgh-hint">
+                    Paste the answer of your AI chat here (the whole message is fine). <strong>Check the answer</strong> shows what the page could read and what it could not.
+                    <strong>Fill the form</strong> then puts the values into the stats form. Nothing is saved until you press Save stats there,
+                    and a value the AI left empty never erases what is already in the form.
+                </p>
+                <label class="lg-lbl lgh-imp-ans">Answer
+                    <textarea class="lg-input" rows="8" data-lgh-impans spellcheck="false" placeholder="HFE-STATS 1&#10;LENGTH 27:14&#10;TOTALS | ..."></textarea>
+                </label>
+                <p class="lgh-imp-ok" data-lgh-impsum role="status"></p>
+                <ul class="lgh-imp-res" data-lgh-impres></ul>
+                <div class="lgh-md-acts">
+                    <button type="button" class="lg-btn lg-btn-ghost" data-lgh-impread>Check the answer</button>
+                    <button type="button" class="lg-btn" data-lgh-impfill disabled>Fill the form</button>
+                </div>
+            }
+        </section>
+    }
+
+    <footer class="lgh-md-foot">
+        <p class="lgh-md-err" data-lgh-err role="alert"></p>
+        <div class="lgh-md-acts">
+            @if (Model.CanEditResult)
+            {
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-edit>Edit result</button>
+            }
+            @if (Model.CanEditStats)
+            {
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-stats>Add / edit stats</button>
+            }
+            @if (Model.CanImportStats)
+            {
+                @* Step 13a: "Fill from screenshots", step 1 = the game name of every player. *@
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-imp>Fill from screenshots</button>
+            }
+            @if (Model.CanSetMvp)
+            {
+                <button type="button" class="lg-btn lg-btn-ghost" data-lgh-mvp-open>Set MVPs</button>
+            }
+            @if (Model.ResultImage != null)
+            {
+                @* Results/export step 3: the "Game result" picture for Discord, drawn in the browser (league-result-image.js). *@
+                <button type="button" class="lg-btn lg-btn-ghost" data-lri-open="@Model.Id">Result image</button>
+            }
+            @if (Model.CanSessionImage)
+            {
+                @* Step 12e/12g: the Session collection picture (this game's day, four games to a picture), data from GET /LeagueExport/Render?kind=session. *@
+                <button type="button" class="lg-btn lg-btn-ghost" data-lri-session="@Url.Action("Render", "LeagueExport", new { kind = "session", matchId = Model.Id })">Session image</button>
+            }
+            @if (Model.CanClashProgress)
+            {
+                @* Step 12g: the Clash progress picture of this game's clash and team (the same picture as on the Clash page). *@
+                <button type="button" class="lg-btn lg-btn-ghost" data-lri-clash="@Url.Action("Render", "LeagueExport", new { kind = "clash", eventId = Model.ClashEventId, teamId = Model.ClashTeamId })">Progress image</button>
+            }
+            @if (Model.CanDelete)
+            {
+                <button type="button" class="lg-btn lg-btn-danger" data-lgh-delete="@Model.Id">Delete match</button>
+            }
+            <button type="button" class="lg-btn lg-btn-ghost" data-lgh-close>Close</button>
+        </div>
+    </footer>
+</article>

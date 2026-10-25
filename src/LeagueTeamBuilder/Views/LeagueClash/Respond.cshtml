@@ -1,0 +1,84 @@
+@model LeagueClashRespondPageModel
+@using LeagueTeamBuilder.Services
+@{
+    ViewData["Title"] = "Clash: " + Model.Title;
+    var yes = Model.Answer == LeagueClashAnswer.Free;
+    var no = Model.Answer == LeagueClashAnswer.Busy;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-clash.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/league-clash.js" asp-append-version="true"></script>
+}
+
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League clash</span>
+            <h1 class="lg-h1">Can you <em>play?</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"clash"' />
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <section class="lg-card lgc-respond" aria-labelledby="lgc-r-title">
+        <h2 class="lgc-r-title" id="lgc-r-title">@Model.Title</h2>
+        <p class="lgc-r-when">
+            <time data-lgc-time data-lgc-long datetime="@LeagueHistoryFormat.Iso(Model.StartsAtUtc)">@LeagueHistoryFormat.Plain(Model.StartsAtUtc)</time>
+        </p>
+        <p class="lgc-r-meta">
+            <span class="lgc-badge">@LeagueClashScheduleService.ModeName(Model.Mode)</span>
+            @if (Model.Status != LeagueClashStatus.Open)
+            {
+                <span class="lgc-badge @(Model.Status == LeagueClashStatus.InProgress ? "lgc-st-live" : Model.Status == LeagueClashStatus.Done ? "lgc-st-done" : "lgc-st-cancelled")">@LeagueClashScheduleService.StatusName(Model.Status)</span>
+            }
+        </p>
+
+        @if (!Model.HasProfile)
+        {
+            <div class="lg-alert lg-err" role="alert">You need a league profile before you can answer. <a asp-controller="League" asp-action="Profile">Create it here.</a></div>
+        }
+        else if (Model.Status == LeagueClashStatus.Cancelled)
+        {
+            <p class="lg-sub">This clash was cancelled. Nothing to answer.</p>
+        }
+        else if (Model.Locked)
+        {
+            <p class="lg-sub">
+                @(Model.Status == LeagueClashStatus.Done ? "This clash is over." : "Clash already started.")
+                Your answer is locked.
+            </p>
+            <p class="lgc-r-answer" role="status">
+                @(yes ? "You said: I can join." : no ? "You said: Busy." : "You did not answer, so you counted as free.")
+            </p>
+        }
+        else
+        {
+            <p class="lg-sub">Pick one. You can change it any time until the first game starts. No answer counts as free.</p>
+            <form method="post" asp-action="SaveResponse" asp-route-id="@Model.EventId" class="lgc-choices">
+                <button type="submit" name="answer" value="free" class="lgc-choice lgc-choice-yes" aria-pressed="@(yes ? "true" : "false")">
+                    <strong>I can join</strong>
+                    <small>@(yes ? "Your current answer" : "Count me in")</small>
+                </button>
+                <button type="submit" name="answer" value="busy" class="lgc-choice lgc-choice-no" aria-pressed="@(no ? "true" : "false")">
+                    <strong>Busy</strong>
+                    <small>@(no ? "Your current answer" : "I can't play")</small>
+                </button>
+            </form>
+            @if (Model.Answer == null)
+            {
+                <p class="lgc-r-answer" role="status">No answer yet, so you count as free.</p>
+            }
+        }
+    </section>
+</div>

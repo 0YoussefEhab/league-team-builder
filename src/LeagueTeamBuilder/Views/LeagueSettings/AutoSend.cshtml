@@ -1,0 +1,50 @@
+@model LeagueAutoSendSettings
+@inject LeagueTeamBuilder.Services.LeagueDiscordSender LeagueDiscord
+@{
+    ViewData["Title"] = "League Discord auto-send";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* Step 12h2. Two switches, both off until saved. The picture is drawn and sent by the browser of the person who finishes the game. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Discord <em>auto-send</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Index">&larr; League settings</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    @if (!LeagueDiscord.IsConfigured)
+    {
+        <div class="lg-alert lg-err" role="status">The League Discord channel is not set up yet (the <code>Discord__LeagueWebhookUrl</code> environment variable is missing), so nothing can be sent. You can still save these switches.</div>
+    }
+
+    <p class="lg-sub">When a game is finished, the result picture can be posted to the League Discord channel by itself. The picture is drawn in the browser of the person who presses <strong>Finish</strong>, so <strong>that person must keep the tab open until the page says the picture was sent</strong>. It only happens when that person's group has <em>LeagueExport &gt; Render</em> and <em>LeagueExport &gt; Send</em>. If sending fails, the result is still saved and the page tells them to use <em>Send to Discord</em> in History. Editing a result, stats or MVPs later never posts again.</p>
+
+    <form method="post" asp-action="AutoSend" class="lg-card">
+        <div class="lg-field">
+            <label class="lg-check"><input type="checkbox" name="gameResult" value="true" checked="@Model.GameResult" /> Send the <strong>Game result</strong> picture when a custom game is finished (Team builder)</label>
+        </div>
+        <div class="lg-field">
+            <label class="lg-check"><input type="checkbox" name="clashProgress" value="true" checked="@Model.ClashProgress" /> Send the <strong>Clash progress</strong> picture when a Clash game is finished (Clash page, that game's team)</label>
+        </div>
+        <button class="lg-btn" type="submit">Save</button>
+        @if (Model.UpdatedUtc != default)
+        {
+            <p class="lg-muted">Last saved <time datetime="@Model.UpdatedUtc.ToString("o")">@Model.UpdatedUtc.ToString("yyyy-MM-dd HH:mm") UTC</time>.</p>
+        }
+    </form>
+</div>

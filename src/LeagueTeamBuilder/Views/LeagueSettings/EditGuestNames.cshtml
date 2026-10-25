@@ -1,0 +1,47 @@
+@model LeagueGuestNamesPageModel
+@{
+    ViewData["Title"] = "Edit guest names";
+    string Err(string key) => Model.Errors.TryGetValue(key, out var m) ? m : "";
+    var f = Model.Form;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Edit guest <em>names</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Guests">&larr; Guests</a></p>
+
+    @if (Model.Errors.Count > 0)
+    {
+        <div class="lg-alert lg-err" role="alert">Please fix the highlighted fields and save again.</div>
+    }
+
+    <form method="post" asp-action="EditGuestNames" class="lg-card">
+        <input type="hidden" name="ProfileId" value="@f.ProfileId" />
+        <input type="hidden" name="IncludeLeague" value="true" />
+        <div class="lg-fieldgrid">
+            <div class="lg-field">
+                <label class="lg-lbl" for="InGameName">In-game name</label>
+                <input id="InGameName" name="InGameName" class="lg-input" maxlength="40" value="@f.InGameName" />
+                @if (Err("InGameName") != "") { <p class="lg-field-err" role="alert">@Err("InGameName")</p> }
+                <p class="lg-hint">Past matches will show the new name too.</p>
+            </div>
+            <div class="lg-field">
+                <label class="lg-lbl" for="RiotId">Riot ID <span class="lg-opt">(optional, name#tag)</span></label>
+                <input id="RiotId" name="RiotId" class="lg-input" maxlength="64" value="@f.RiotId" />
+                @if (Err("RiotId") != "") { <p class="lg-field-err" role="alert">@Err("RiotId")</p> }
+            </div>
+        </div>
+        <div class="lg-savebar lg-gap">
+            <a class="lg-btn lg-btn-ghost" asp-action="Guests">Cancel</a>
+            <button class="lg-btn" type="submit">Save names</button>
+        </div>
+    </form>
+</div>

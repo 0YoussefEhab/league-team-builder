@@ -1,0 +1,89 @@
+@using LeagueTeamBuilder.Services
+@model LeagueLinkedGuestsPageModel
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "League link log";
+    var canUndo = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "UndoGuestLink");
+    var canLink = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "LinkGuest");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* Admin fixes Step 4e. The link log. Undo link reverses one link; Change user = Undo, then the Link screen for the guest. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Link <em>log</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Guests">&larr; Guests</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <p class="lg-sub">Guest links made since this log was added. Undo link puts the guest back as it was; matches played since stay with the member. Links made earlier are not here: find them in Guests &gt; Linked and use Unlink. Notifications already sent cannot be unsent.</p>
+
+    <section class="lg-card">
+        <h2 class="lg-h2">Links (@Model.Rows.Count, @Model.ActiveCount active)</h2>
+        @if (Model.Rows.Count == 0)
+        {
+            <div class="lg-empty">No guest has been linked since the log was added.</div>
+        }
+        else
+        {
+            <div class="lg-table-wrap">
+                <table class="lg-table">
+                    <thead>
+                        <tr><th scope="col">When (UTC)</th><th scope="col">Guest</th><th scope="col">Linked to</th><th scope="col">Type</th><th scope="col">By</th><th scope="col">Status</th><th scope="col">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.LinkedUtc.ToString("d MMM yyyy HH:mm")</td>
+                                <td>@r.GuestName</td>
+                                <td>@r.UserLabel</td>
+                                <td>@(r.Kind == LeagueLinkKind.Merge ? "Merged into their profile" : "Became their profile")</td>
+                                <td>@r.LinkedBy</td>
+                                <td>
+                                    @if (r.Active)
+                                    {
+                                        <span>Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="lg-muted">Undone</span>
+                                        <span class="lg-muted lg-block">@r.UndoneUtc?.ToString("d MMM yyyy HH:mm") UTC, by @r.UndoneBy</span>
+                                    }
+                                </td>
+                                <td class="lg-actions">
+                                    @if (r.Active && canUndo)
+                                    {
+                                        <form method="post" asp-action="UndoGuestLink" class="lg-inline"
+                                              onsubmit="return confirm('Undo this link? @(r.Kind == LeagueLinkKind.Merge ? "The guest is recreated and only the recorded matches move back." : "The profile goes back to being a guest. Its champions and picture are dropped.")');">
+                                            <input type="hidden" name="id" value="@r.LogId" />
+                                            <button class="lg-btn lg-btn-ghost" type="submit">Undo link</button>
+                                            @if (canLink)
+                                            {
+                                                <button class="lg-btn lg-btn-ghost" type="submit" name="changeUser" value="true">Change user</button>
+                                            }
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

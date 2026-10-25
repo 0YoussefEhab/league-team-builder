@@ -1,0 +1,67 @@
+@using LeagueTeamBuilder.Services
+@model LeagueUnlinkPreview
+@{
+    ViewData["Title"] = "Unlink profile";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* Admin fixes Step 4d. Confirm screen of the manual Unlink: a member profile that came from a guest, for an older link with no log entry. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Unlink <em>profile</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Guests" asp-route-filter="@LeagueGuestFilter.Linked">&larr; Linked guests</a></p>
+
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <section class="lg-card">
+        <h2 class="lg-h2">Unlink @Model.Name from @Model.UserLabel</h2>
+        @if (!string.IsNullOrWhiteSpace(Model.Email))
+        {
+            <p class="lg-sub">@Model.Email</p>
+        }
+
+        @if (!Model.CanUnlink)
+        {
+            <div class="lg-alert lg-err" role="alert">@Model.BlockReason</div>
+            <div class="lg-savebar lg-gap">
+                <a class="lg-btn lg-btn-ghost" asp-action="Guests" asp-route-filter="@LeagueGuestFilter.Linked">Back</a>
+            </div>
+        }
+        else
+        {
+            <form method="post" asp-action="UnlinkGuest">
+                <input type="hidden" name="id" value="@Model.ProfileId" />
+
+                <p>This profile has no entry in the link log, so it is an older link. Unlinking does this:</p>
+                <ul>
+                    <li><b>@Model.Name</b> goes back to being a guest and no longer belongs to <b>@Model.UserLabel</b>.</li>
+                    <li>The name stays as it is now. The old guest name and picture are not known, so they cannot be restored.</li>
+                    <li>The @Model.Champions @(Model.Champions == 1 ? "champion" : "champions") @(Model.HasPicture ? "and the member picture are" : "is") dropped, because guests have none.</li>
+                    <li>The @Model.MatchEntries match @(Model.MatchEntries == 1 ? "entry" : "entries") stay on the profile (@Model.GuestEntries made while it was a guest).</li>
+                </ul>
+                <p class="lg-sub">If this guest was merged into an existing profile, that guest row no longer exists and cannot be brought back here. This only works for a guest that became the member's profile.</p>
+
+                <div class="lg-field">
+                    <label class="lg-check"><input type="checkbox" name="confirmed" value="true" /> I understand, unlink this profile</label>
+                </div>
+
+                <div class="lg-alert lg-err" role="note">The change is written to the admin activity log.</div>
+
+                <div class="lg-savebar lg-gap">
+                    <a class="lg-btn lg-btn-ghost" asp-action="Guests" asp-route-filter="@LeagueGuestFilter.Linked">Back</a>
+                    <button class="lg-btn" type="submit">Unlink</button>
+                </div>
+            </form>
+        }
+    </section>
+</div>

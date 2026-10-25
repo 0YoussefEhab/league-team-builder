@@ -1,0 +1,24 @@
+@model LeagueChampionPickerModel
+@*
+    Searchable multi-select of catalog champions for ONE lane (docs/LEAGUE_BUILD_SPEC.md section 7).
+    Selected champions render as chips with a hidden input each (name = FieldName), so they post as a
+    List<int>. wwwroot/js/league-profile.js adds the search list (catalog JSON in #lg-champ-catalog).
+    No free text: the server rejects any id that is not in the catalog.
+*@
+<div class="lg-champ" data-lg-champ data-field="@Model.FieldName">
+    <div class="lg-chips" data-lg-chips>
+        @foreach (var c in Model.Selected)
+        {
+            <span class="lg-chip @(c.Retired ? "is-retired" : null)" data-id="@c.Id">
+                <input type="hidden" name="@Model.FieldName" value="@c.Id" />
+                <span>@c.Name@(c.Retired ? " (retired)" : "")</span>
+                <button type="button" class="lg-chip-x" aria-label="Remove @c.Name">&times;</button>
+            </span>
+        }
+    </div>
+    <div class="lg-champ-search">
+        <input type="search" class="lg-input" data-lg-champ-input placeholder="Search champions to add" autocomplete="off"
+               role="combobox" aria-expanded="false" aria-autocomplete="list" aria-label="Add a @Model.Lane champion" />
+        <ul class="lg-champ-list" role="listbox" data-lg-champ-list hidden></ul>
+    </div>
+</div>

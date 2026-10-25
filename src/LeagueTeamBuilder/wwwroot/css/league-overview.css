@@ -1,0 +1,249 @@
+/* =====================================================================
+   League Overview (Step 8c). Ported from docs/league-overview-mockup.html.
+   Needs league.css (tokens, .lg-card, .lg-grid, .lg-th). Every class is lg-* so nothing leaks.
+   Theme: --hv-* tokens (Gold, Crimson, Glitch); radii use --lg-k (1, or 0 in Glitch).
+   Mockup -> real names: pod -> lg-pod, pic -> lg-pic, ct -> lg-ct, stat -> lg-stat, bd -> lg-bd, rk -> lg-rk.
+   The mockup's watermark image is the site mark, drawn with the accent colour through --hv-logo (as profile-v2.css does).
+   ===================================================================== */
+
+.lg-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* small pieces */
+.lg-pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.lg-rk { height: 36px; width: auto; vertical-align: middle; }
+.lg-rk-s { height: 22px; }
+.lg-bd { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 6px; border-radius: calc(20px * var(--lg-k));
+  font: 700 10px var(--hv-body); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
+.lg-bd-guest { border: 1px dashed var(--hv-line); color: var(--hv-mut); padding: 1px 8px; }
+
+/* ---------- podium: top ranked ---------- */
+.lg-pod-grid { display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 14px; align-items: end; }
+.lg-pod { position: relative; overflow: hidden; min-height: 260px; padding: 20px; border: 1px solid var(--hv-line);
+  border-radius: calc(20px * var(--lg-k)); background: var(--hv-card); display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; transition: .2s; }
+.lg-pod:hover { border-color: var(--hv-acc); transform: translateY(-3px); }
+.lg-pod.lg-p1 { min-height: 310px; border-color: var(--hv-acc); order: 2; box-shadow: 0 18px 50px -20px var(--hv-glow); }
+.lg-pod.lg-p2 { order: 1; }
+.lg-pod.lg-p3 { order: 3; }
+.lg-pod::before { content: ""; position: absolute; left: -30px; bottom: -30px; width: 210px; height: 210px; background: var(--hv-acc); opacity: .08;
+  -webkit-mask: var(--hv-logo) center/contain no-repeat; mask: var(--hv-logo) center/contain no-repeat; pointer-events: none; }
+.lg-pod .lg-pic { position: absolute; top: 0; right: 0; bottom: 0; width: 58%; display: grid; place-items: center; overflow: hidden;
+  font: 400 150px var(--hv-disp); color: rgba(255,255,255,.2);
+  background: linear-gradient(150deg, hsl(var(--h) 45% 34%), hsl(calc(var(--h) + 40) 50% 14%));
+  -webkit-mask-image: linear-gradient(to left, #000 45%, transparent); mask-image: linear-gradient(to left, #000 45%, transparent); }
+.lg-pod > :not(.lg-pic) { position: relative; z-index: 1; }
+.lg-pod .lg-place { font: 400 64px/1 var(--hv-disp); color: var(--hv-acc); }
+.lg-pod.lg-p1 .lg-place { font-size: 84px; }
+.lg-pod h3 { margin: 0; font: 400 26px/1.05 var(--hv-disp); text-transform: uppercase; overflow-wrap: anywhere; }
+.lg-pod .lg-rkline { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+/* fewer than three people: no podium order, the cards simply sit side by side */
+.lg-pod-grid.is-few { grid-template-columns: repeat(auto-fit, minmax(220px, 300px)); justify-content: center; }
+.lg-pod-grid.is-few .lg-pod { order: 0 !important; }
+.lg-pod-grid.is-few .lg-pod.lg-p1 { order: -1 !important; }
+
+/* ---------- top MVPs ---------- */
+.lg-mvp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.lg-mvp-grid.is-few { grid-template-columns: repeat(auto-fit, minmax(220px, 300px)); justify-content: center; }
+.lg-pod.lg-pm { min-height: 235px; }
+.lg-pod.lg-pm .lg-place { font-size: 56px; }
+.lg-pod.lg-pm .lg-place small { font: 700 11px var(--hv-body); letter-spacing: .14em; color: var(--hv-mut); margin-left: 6px; }
+.lg-pod.lg-pm .lg-pic { font-size: 110px; }
+.lg-pod.lg-pm .lg-rank-n { position: absolute; top: 14px; left: 16px; font: 400 22px var(--hv-disp); color: var(--hv-mut); z-index: 1; }
+
+/* ---------- best Clash team ---------- */
+.lg-cteam-wrap { position: relative; }
+.lg-cteam-wrap::before { content: ""; position: absolute; right: -10px; top: -20px; width: 260px; height: 260px; background: var(--hv-acc); opacity: .06;
+  -webkit-mask: var(--hv-logo) center/contain no-repeat; mask: var(--hv-logo) center/contain no-repeat; pointer-events: none; }
+.lg-cteam { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.lg-ct { position: relative; aspect-ratio: 3 / 4.3; border-radius: calc(16px * var(--lg-k)); overflow: hidden; border: 1px solid var(--hv-line);
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; transition: .2s;
+  background: linear-gradient(170deg, hsl(var(--h) 45% 32%), hsl(calc(var(--h) + 40) 50% 12%)); }
+.lg-ct:hover { border-color: var(--hv-acc); transform: translateY(-3px); }
+.lg-ct > .lg-pimg { z-index: 0; }
+.lg-ct .lg-big { position: absolute; inset: 0 0 38% 0; display: grid; place-items: center; font: 400 80px var(--hv-disp); color: rgba(255,255,255,.22); }
+.lg-ct::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.85) 28%, transparent 65%); }
+.lg-ct > :not(.lg-big):not(.lg-pimg) { position: relative; z-index: 1; }
+.lg-ct .lg-lane-l { font: 700 10px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-acc); }
+.lg-ct .lg-nm { font: 400 clamp(14px, 1.6vw, 19px)/1.1 var(--hv-disp); text-transform: uppercase; word-break: break-word; }
+.lg-ct .lg-rkrow { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,.75); margin-top: 4px; }
+.lg-won { display: inline-flex; gap: 6px; align-items: center; padding: 4px 12px; border-radius: calc(20px * var(--lg-k));
+  background: var(--lg-ok); color: #07210f; font: 700 12px var(--hv-body); }
+
+/* ---------- server stats ---------- */
+.lg-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.lg-stat { padding: 16px; border: 1px solid var(--hv-line); border-radius: calc(16px * var(--lg-k)); background: var(--hv-card);
+  display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lg-stat .lg-v { font: 400 40px/1 var(--hv-disp); }
+.lg-stat .lg-v.lg-acc { color: var(--hv-acc); }
+.lg-stat .lg-v.lg-txt { font-size: 24px; line-height: 1.1; padding: 8px 0 4px; overflow-wrap: anywhere; }
+.lg-stat .lg-l { font: 700 11px var(--hv-body); letter-spacing: .12em; text-transform: uppercase; color: var(--hv-mut); }
+.lg-stat .lg-s { font-size: 12px; color: var(--hv-mut); }
+.lg-sect-label { font: 700 11px var(--hv-body); letter-spacing: .16em; text-transform: uppercase; color: var(--hv-mut); margin: 20px 0 10px; }
+.lg-sect-label.lg-first { margin-top: 0; }
+
+/* ---------- small screens ---------- */
+@media (max-width: 760px) {
+  .lg-pod-grid { grid-template-columns: 1fr; }
+  .lg-pod-grid .lg-pod, .lg-pod-grid .lg-pod.lg-p1 { min-height: 170px; order: 0 !important; }
+  .lg-pod-grid .lg-pod.lg-p1 { order: -1 !important; }
+  .lg-pod .lg-place { font-size: 48px; }
+  .lg-pod.lg-p1 .lg-place { font-size: 56px; }
+  .lg-pod .lg-pic { font-size: 100px; }
+  .lg-mvp-grid { grid-template-columns: 1fr; }
+  .lg-pod.lg-pm { min-height: 150px; }
+}
+@media (max-width: 640px) {
+  .lg-cteam { grid-template-columns: repeat(5, minmax(104px, 1fr)); overflow-x: auto; padding-bottom: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-pod:hover, .lg-ct:hover { transform: none; }
+}
+
+/* =====================================================================
+   Leaderboard (Step 8d). Ported from the LEADERBOARD part of docs/league-overview-mockup.html.
+   Mockup -> real names: lb-* -> lg-lb-*, rchip -> lg-rchip, seg -> lg-seg, av -> lg-av, ln -> lg-ln, num -> lg-lb-n
+   (the real .lg-num already exists in league.css with another meaning), hide-s -> lg-hide-s, pod-foot -> lg-pod-foot.
+   Step 8e adds one more grid column (110px, the "View profile" button) and turns the rows into links.
+   ===================================================================== */
+
+.lg-pod-foot { display: flex; justify-content: center; margin-top: 16px; }
+
+/* avatar: coloured initial, or the picture on top of it (hue from --h, set by the row) */
+.lg-av { position: relative; display: grid; place-items: center; overflow: hidden; border-radius: calc(50% * var(--lg-k)); border: 2px solid var(--hv-acc); flex: none;
+  background: linear-gradient(150deg, hsl(var(--h) 45% 34%), hsl(calc(var(--h) + 40) 50% 16%)); }
+.lg-av b { font: 400 1em var(--hv-disp); color: rgba(255,255,255,.85); }
+.lg-av.is-guest { border-style: dashed; }
+.lg-av-s { width: 34px; height: 34px; font-size: 15px; }
+.lg-av-m { width: 52px; height: 52px; font-size: 22px; }
+.lg-av-l { width: 96px; height: 96px; font-size: 42px; }
+
+/* tools */
+.lg-lb-tools { display: grid; gap: 12px; }
+.lg-lb-row1 { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.lg-lb-search { flex: 1 1 240px; width: auto; min-height: 42px; }
+.lg-lb-sel { width: auto; min-height: 42px; }
+.lg-seg { display: inline-flex; padding: 4px; gap: 2px; border: 1px solid var(--hv-line); border-radius: calc(30px * var(--lg-k)); background: var(--hv-card); }
+.lg-seg label { position: relative; display: block; cursor: pointer; }
+.lg-seg input, .lg-rchip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.lg-seg span { display: block; padding: 6px 14px; border-radius: calc(24px * var(--lg-k)); font: 700 12px var(--hv-body); color: var(--hv-mut); }
+.lg-seg input:checked + span { background: var(--hv-acc); color: var(--hv-bg); }
+.lg-seg input:focus-visible + span, .lg-rchip input:focus-visible + span { outline: 2px solid var(--hv-acc); outline-offset: 2px; }
+.lg-rchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.lg-rchip { position: relative; display: inline-block; cursor: pointer; }
+.lg-rchip span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 8px; min-height: 34px; border: 1px solid var(--hv-line); border-radius: calc(30px * var(--lg-k));
+  font: 700 12px var(--hv-body); color: var(--hv-mut); }
+.lg-rchip .lg-rk { height: 20px; }
+.lg-rchip input:checked + span { background: var(--hv-acc); border-color: var(--hv-acc); color: var(--hv-bg); }
+.lg-lb-count { margin: 4px 0 12px; }
+
+/* list */
+.lg-lb-head, .lg-lb-r { display: grid; grid-template-columns: 44px minmax(190px, 2.2fr) minmax(130px, 1.3fr) minmax(110px, 1fr) 88px 70px 84px 70px 70px; gap: 12px; align-items: center; }
+.lg-lb-head { padding: 0 14px 8px; font: 700 10px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-mut); }
+.lg-lb-r { padding: 10px 14px; border: 1px solid var(--hv-line); border-radius: calc(16px * var(--lg-k)); background: var(--hv-card); margin-bottom: 8px; transition: .2s; }
+.lg-lb-r:hover { border-color: var(--hv-acc); }
+.lg-lb-pos { font: 400 24px var(--hv-disp); color: var(--hv-mut); }
+.lg-lb-r.is-top .lg-lb-pos { color: var(--hv-acc); }
+.lg-lb-who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.lg-lb-t { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-weight: 700; min-width: 0; }
+.lg-lb-name { overflow-wrap: anywhere; }
+.lg-lb-sub { display: none; flex-basis: 100%; color: var(--hv-mut); font-weight: 400; font-size: 12px; }
+.lg-lb-rk { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.lg-lb-rk small { display: block; color: var(--hv-mut); font-weight: 400; font-size: 11px; }
+.lg-lanes-mini { display: flex; gap: 4px; flex-wrap: wrap; }
+.lg-ln { font: 700 10px var(--hv-body); letter-spacing: .06em; padding: 2px 7px; border-radius: calc(8px * var(--lg-k)); border: 1px solid var(--hv-line); color: var(--hv-mut); }
+.lg-ln.lg-ln-m { background: var(--hv-acc); border-color: var(--hv-acc); color: var(--hv-bg); }
+.lg-lb-n { font-weight: 700; text-align: center; }
+.lg-lb-r .lg-lb-mv { color: var(--hv-acc); }
+/* Leaderboard step L2: the "Avg score" column (2 decimals); a player under the minimum shows "N more games" small and greyed. */
+.lg-lb-sc { font-variant-numeric: tabular-nums; }
+.lg-lb-sc.is-wait { color: var(--hv-mut); font-weight: 400; font-size: 11px; line-height: 1.25; }
+.lg-lb-note { margin: 4px 0 0; }
+
+@media (max-width: 900px) {
+  .lg-lb-head { display: none; }
+  .lg-lb-r { grid-template-columns: 36px minmax(0, 1fr); }
+  .lg-hide-s { display: none; }
+  /* the columns are hidden on a phone, so the name block carries a one-line summary instead */
+  .lg-lb-sub { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-lb-r { transition: none; }
+}
+
+/* =====================================================================
+   Player page and profile links (Step 8e). Ported from the PROFILE view of docs/league-overview-mockup.html.
+   Mockup -> real names: hero -> lg-hero (info -> lg-hero-info, pic -> lg-hero-pic), rk-big -> lg-rk-big, pstats -> lg-pstats,
+   stat.hl -> lg-stat.is-hl, pyr -> lg-pyr (tier -> lg-ptier, tl -> lg-ptl, lns -> lg-lns, lnb -> lg-lnb, none -> lg-pnone),
+   adminedit -> lg-adminedit (a card). Checked: none of these names exist in the other League stylesheets.
+   Links: a card / row / tile is an <a>; without an href (the viewer may not open League > Player) it stays plain.
+   ===================================================================== */
+
+/* links to the player page: keep the text colour, show the focus, pointer only on a real link */
+.lg-page a.lg-pod, .lg-page a.lg-ct, .lg-page a.lg-lb-r,
+.lg-page a.lg-pod:hover, .lg-page a.lg-ct:hover, .lg-page a.lg-lb-r:hover { color: inherit; }
+.lg-page a.lg-pod[href], .lg-page a.lg-ct[href], .lg-page a.lg-lb-r[href] { cursor: pointer; }
+.lg-page a.lg-pod[href]:focus-visible, .lg-page a.lg-ct[href]:focus-visible, .lg-page a.lg-lb-r[href]:focus-visible { outline: 2px solid var(--hv-acc); outline-offset: 3px; }
+.lg-plink { color: inherit; }
+.lg-page a.lg-plink[href]:hover { color: var(--lg-acc-t); text-decoration: underline; }
+.lg-page a.lg-plink:not([href]):hover { color: inherit; }
+.lg-btn.lg-btn-sm { min-height: 30px; padding: 4px 12px; font-size: 12px; }
+
+/* Leaderboard: the 110px "View profile" column, only when the viewer may open the player page */
+.lg-lb-head.has-view, .lg-lb-r.has-view { grid-template-columns: 44px minmax(190px, 2.2fr) minmax(130px, 1.3fr) minmax(110px, 1fr) 88px 70px 84px 70px 70px 110px; }
+.lg-lb-view { display: flex; justify-content: flex-end; }
+.lg-lb-r:hover .lg-lb-view .lg-btn { border-color: var(--hv-acc); color: var(--lg-acc-t); }
+@media (max-width: 900px) {
+  .lg-lb-r.has-view { grid-template-columns: 36px minmax(0, 1fr); }
+}
+
+/* hero */
+.lg-card.lg-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); min-height: 300px; padding: 0; }
+.lg-hero::before { content: ""; position: absolute; left: -20px; bottom: -40px; width: 280px; height: 280px; background: var(--hv-acc); opacity: .07;
+  -webkit-mask: var(--hv-logo) center/contain no-repeat; mask: var(--hv-logo) center/contain no-repeat; pointer-events: none; }
+.lg-hero-info { position: relative; z-index: 1; padding: 28px; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; min-width: 0; }
+.lg-hero-info h2 { margin: 0; font: 400 clamp(40px, 6vw, 64px)/.95 var(--hv-disp); text-transform: uppercase; overflow-wrap: anywhere; }
+.lg-hero-pic { position: relative; display: grid; place-items: center; overflow: hidden; min-height: 220px; font: 400 220px var(--hv-disp); color: rgba(255,255,255,.18);
+  background: linear-gradient(150deg, hsl(var(--h) 45% 34%), hsl(calc(var(--h) + 40) 50% 14%));
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 45%); mask-image: linear-gradient(to right, transparent, #000 45%); }
+.lg-rk-big { display: flex; align-items: center; gap: 14px; }
+.lg-rk-big .lg-rk { height: 64px; }
+.lg-rk-big b { display: block; font: 400 26px/1 var(--hv-disp); text-transform: uppercase; }
+.lg-rk-big small { color: var(--hv-mut); }
+@media (max-width: 760px) {
+  .lg-card.lg-hero { grid-template-columns: 1fr; }
+  .lg-hero-pic { order: -1; min-height: 150px; font-size: 110px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent); mask-image: linear-gradient(to bottom, #000 50%, transparent); }
+  .lg-hero-info { padding: 20px; }
+}
+
+/* admin rank editor (only for a group with LeagueSettings > EditPlayerRank): its own card under the hero */
+.lg-card.lg-adminedit { border-color: var(--hv-acc); }
+.lg-adminedit-form { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 12px; }
+.lg-adminedit-form .lg-rank { min-width: 190px; }
+
+/* stats */
+.lg-pstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.lg-stat.is-hl { border-color: var(--hv-acc); background: linear-gradient(145deg, rgba(255,255,255,.08), var(--hv-card)); }
+
+/* lane pyramid */
+.lg-pyr { display: grid; gap: 6px; justify-items: center; }
+.lg-ptier { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 84px; padding: 10px 0 8px; width: var(--w);
+  clip-path: polygon(var(--in) 0, calc(100% - var(--in)) 0, 100% 100%, 0 100%); background: var(--bgc); text-align: center; }
+.lg-ptier.lg-t1 { --w: 46%; --in: 9%; --bgc: var(--hv-acc); color: var(--hv-bg); }
+.lg-ptier.lg-t2 { --w: 74%; --in: 5.5%; --bgc: color-mix(in srgb, var(--hv-acc) 38%, transparent); }
+.lg-ptier.lg-t3 { --w: 100%; --in: 3.5%; --bgc: color-mix(in srgb, var(--hv-acc) 14%, transparent); }
+.lg-ptl { font: 700 10px var(--hv-body); letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
+.lg-lns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 0 14px; }
+.lg-lnb { font: 400 22px/1 var(--hv-disp); text-transform: uppercase; letter-spacing: .03em; }
+.lg-t3 .lg-lnb { font-size: 17px; color: var(--hv-ink); }
+.lg-t3 .lg-lnb.is-dim { color: var(--hv-mut); }
+.lg-pnone { font-size: 12px; opacity: .7; }
+.lg-pyr-note { margin-top: 12px; }
+@media (max-width: 560px) {
+  .lg-ptier.lg-t1 { --w: 62%; }
+  .lg-ptier.lg-t2 { --w: 82%; }
+  .lg-lnb { font-size: 18px; }
+}
+
+/* Step 8h: the "Match history" button in the Player hero */
+.lg-hero-act { margin-top: 14px; }
+

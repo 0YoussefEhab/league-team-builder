@@ -1,0 +1,115 @@
+@model LeagueClashSchedulePageModel
+@using LeagueTeamBuilder.Services
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "League clash schedule";
+    var canCreate = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "CreateClash");
+    var canEdit = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "EditClash");
+    var canCancel = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "CancelClash");
+    string StClass(LeagueClashStatus s) => s switch
+    {
+        LeagueClashStatus.Open => "lgc-st-open",
+        LeagueClashStatus.InProgress => "lgc-st-live",
+        LeagueClashStatus.Done => "lgc-st-done",
+        _ => "lgc-st-cancelled",
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-clash.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/league-clash.js" asp-append-version="true"></script>
+}
+
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Clash <em>schedule</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Index">&larr; League settings</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <p class="lg-sub">Schedule a clash and every member whose group may answer gets a notification with a link to say <b>I can join</b> or <b>Busy</b>. Unanswered counts as free and guests are always free. Changing the date notifies them again; changing the title or the mode does not. A clash can be edited or cancelled until its first game starts.</p>
+
+    <div class="lg-grid">
+        @if (canCreate)
+        {
+            <section class="lg-card lg-c12" aria-labelledby="lgc-new-title">
+                <div class="lg-th"><h2 class="lg-h2" id="lgc-new-title">New clash</h2></div>
+                <form method="post" asp-action="CreateClash" data-lgc-form>
+                    <div class="lg-fieldgrid">
+                        <div class="lg-field">
+                            <label class="lg-lbl" for="lgc-title">Title</label>
+                            <input id="lgc-title" name="Title" value="@Model.Form.Title" class="lg-input" maxlength="100" required />
+                            @if (Model.Errors.TryGetValue("Title", out var eTitle)) { <p class="lg-field-err" role="alert">@eTitle</p> }
+                        </div>
+                        <div class="lg-field">
+                            <label class="lg-lbl" for="lgc-when">Date and time <small class="lg-muted" data-lgc-tz>(your time zone)</small></label>
+                            <input id="lgc-when" name="StartsAtLocal" type="datetime-local" value="@Model.Form.StartsAtLocal" class="lg-input" required data-lgc-local />
+                            <input type="hidden" name="StartsAtUtc" value="@Model.Form.StartsAtUtc" data-lgc-utc />
+                            <noscript><p class="lg-muted">Without JavaScript this time is read as UTC.</p></noscript>
+                            @if (Model.Errors.TryGetValue("StartsAt", out var eWhen)) { <p class="lg-field-err" role="alert">@eWhen</p> }
+                        </div>
+                        <div class="lg-field">
+                            <label class="lg-lbl" for="lgc-mode">Mode</label>
+                            <select id="lgc-mode" name="Mode" class="lg-select">
+                                <option value="@((int)LeagueMode.Normal)" selected="@(Model.Form.Mode == LeagueMode.Normal)">Normal Draft (lanes and rank)</option>
+                                <option value="@((int)LeagueMode.Aram)" selected="@(Model.Form.Mode == LeagueMode.Aram)">ARAM (5 strongest, rank only)</option>
+                            </select>
+                            @if (Model.Errors.TryGetValue("Mode", out var eMode)) { <p class="lg-field-err" role="alert">@eMode</p> }
+                        </div>
+                    </div>
+                    <button class="lg-btn" type="submit">Schedule clash and notify</button>
+                </form>
+            </section>
+        }
+
+        <section class="lg-card lg-c12" aria-labelledby="lgc-list-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lgc-list-title">Clashes</h2></div>
+            @if (Model.Events.Count == 0)
+            {
+                <div class="lg-empty">No clash scheduled yet.</div>
+            }
+            @foreach (var r in Model.Events)
+            {
+                <div class="lgc-row">
+                    <div class="lgc-main">
+                        <strong class="lgc-title">@r.Title</strong>
+                        <span class="lgc-meta">
+                            <time data-lgc-time datetime="@LeagueHistoryFormat.Iso(r.StartsAtUtc)">@LeagueHistoryFormat.Plain(r.StartsAtUtc)</time>
+                            &middot; @LeagueClashScheduleService.ModeName(r.Mode)
+                        </span>
+                    </div>
+                    <span class="lgc-badge @StClass(r.Status)">@LeagueClashScheduleService.StatusName(r.Status)</span>
+                    <small class="lg-muted lgc-counts">@r.CanJoin can join &middot; @r.Busy busy@(r.Games > 0 ? $" · {r.Games} game(s)" : "")</small>
+                    <div class="lgc-acts">
+                        @if (r.CanChange && canEdit)
+                        {
+                            <a class="lg-btn lg-btn-ghost" asp-action="EditClash" asp-route-id="@r.Id">Edit</a>
+                        }
+                        @if (r.CanChange && canCancel)
+                        {
+                            <form method="post" asp-action="CancelClash" class="lg-inline"
+                                  onsubmit="return confirm('Cancel this clash? Members are told it is off.');">
+                                <input type="hidden" name="id" value="@r.Id" />
+                                <button class="lg-btn lg-btn-danger" type="submit">Cancel clash</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+</div>

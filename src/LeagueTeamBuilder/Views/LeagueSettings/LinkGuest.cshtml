@@ -1,0 +1,118 @@
+@using LeagueTeamBuilder.Services
+@model LeagueLinkPageModel
+@{
+    ViewData["Title"] = "Link guest to user";
+    var p = Model.Preview;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* Step 7b (PLAN-league.md). One page, two states: pick the user (search), then confirm. Works without JavaScript. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Link <em>guest</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Guests">&larr; Guests</a></p>
+
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    @if (p is null)
+    {
+        <p class="lg-sub">Choose the HFECloud user who is <b>@Model.GuestName</b>. Only users whose group has League access are listed.</p>
+
+        <form method="get" class="lg-search" role="search">
+            <input type="hidden" name="id" value="@Model.GuestId" />
+            <label class="lg-lbl" for="q">Search</label>
+            <input id="q" name="q" value="@Model.Query" class="lg-input" placeholder="Name, user name or email" />
+            <button class="lg-btn lg-btn-ghost" type="submit">Search</button>
+        </form>
+
+        <section class="lg-card">
+            <h2 class="lg-h2">Users (@Model.Users.Count)</h2>
+            @if (Model.Users.Count == 0)
+            {
+                <div class="lg-empty">@(string.IsNullOrWhiteSpace(Model.Query) ? "No user has League access yet." : "Nobody matches your search.")</div>
+            }
+            else
+            {
+                <div class="lg-table-wrap">
+                    <table class="lg-table">
+                        <thead>
+                            <tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">League profile</th><th scope="col">Action</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var u in Model.Users)
+                            {
+                                <tr>
+                                    <td>@u.DisplayName</td>
+                                    <td>@u.Email</td>
+                                    <td>@(u.HasProfile ? u.ProfileName + " (will be merged)" : "None yet")</td>
+                                    <td class="lg-actions">
+                                        <a class="lg-btn" asp-action="LinkGuest" asp-route-id="@Model.GuestId" asp-route-userId="@u.UserId" asp-route-q="@Model.Query">Choose</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.Users.Count >= LeagueGuestLinkRules.DefaultSearchRows)
+                {
+                    <p class="lg-sub">Showing the first @LeagueGuestLinkRules.DefaultSearchRows. Type more of the name to narrow the list.</p>
+                }
+            }
+        </section>
+    }
+    else
+    {
+        <form method="post" asp-action="LinkGuest" class="lg-card">
+            <input type="hidden" name="GuestId" value="@p.GuestId" />
+            <input type="hidden" name="UserId" value="@p.User.UserId" />
+
+            <h2 class="lg-h2">Link @p.GuestName to @p.User.DisplayName</h2>
+            @if (!string.IsNullOrWhiteSpace(p.User.Email))
+            {
+                <p class="lg-sub">@p.User.Email</p>
+            }
+
+            @if (p.Merge)
+            {
+                <p><b>@p.User.DisplayName</b> already has a league profile (<b>@p.User.ProfileName</b>), so this is a <b>merge</b>:</p>
+                <ul>
+                    <li>Their league profile stays exactly as it is: rank, lanes, champions, name and picture.</li>
+                    <li>The guest's own rank, lanes and champions are discarded.</li>
+                    <li>@p.MatchEntries match @(p.MatchEntries == 1 ? "entry" : "entries") of the guest @(p.MatchEntries == 1 ? "moves" : "move") to their profile, so the history and stats carry over.</li>
+                    <li>The guest <b>@p.GuestName</b> is deleted.</li>
+                </ul>
+            }
+            else
+            {
+                <p><b>@p.User.DisplayName</b> has no league profile yet, so <b>@p.GuestName</b> becomes their profile. Rank, lanes, history and the rest stay as they are. They are no longer a guest.</p>
+                <div class="lg-field">
+                    @if (!string.IsNullOrWhiteSpace(p.MemberName))
+                    {
+                        <label class="lg-check"><input type="checkbox" name="UseUserName" value="true" /> Use the user's name (@p.MemberName) instead of @p.GuestName</label>
+                    }
+                    @if (p.CanCopyPicture)
+                    {
+                        <label class="lg-check"><input type="checkbox" name="UseUserPicture" value="true" /> Use the user's picture</label>
+                    }
+                </div>
+            }
+
+            <div class="lg-alert lg-err" role="note">If this is the wrong user, you can undo it from the Link log. The change is written to the admin activity log.</div>
+
+            <div class="lg-savebar lg-gap">
+                <a class="lg-btn lg-btn-ghost" asp-action="LinkGuest" asp-route-id="@Model.GuestId" asp-route-q="@Model.Query">Back</a>
+                <button class="lg-btn" type="submit">@(p.Merge ? "Merge and delete guest" : "Link guest")</button>
+            </div>
+        </form>
+    }
+</div>

@@ -1,0 +1,146 @@
+@using LeagueTeamBuilder.Services
+@model LeagueGuestsPageModel
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "League guests";
+    var canLink = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "LinkGuest");
+    var canEditNames = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "EditGuestNames");
+    var canLinkLog = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "LinkedGuests");
+    var canUnlink = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "UnlinkGuest");
+    var showStatus = Model.Filter != LeagueGuestFilter.Unlinked;
+    var heading = Model.Filter switch { LeagueGuestFilter.Linked => "Linked", LeagueGuestFilter.All => "All", _ => "Guests" };
+    string LaneLabel(LeagueLane l) => l == LeagueLane.Adc ? "ADC" : l.ToString();
+    string Rank(LeagueRank r, int? d) => r + (d is int n ? " " + n : "");
+    string Badge(LeagueRank r) => Url.Content("~/img/ranks/" + r.ToString().ToLowerInvariant() + ".png");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R5). Same data, same forms and field names, same wording; only the page shell and classes changed. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">League <em>guests</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Index">&larr; League settings</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+    @if (Model.Errors.Count > 0)
+    {
+        <div class="lg-alert lg-err" role="alert">Please fix the highlighted fields and add the guest again.</div>
+    }
+
+    @if (canLinkLog)
+    {
+        <p class="lg-sub"><a asp-action="LinkedGuests">Link log</a>: every guest link, with Undo link and Change user.</p>
+    }
+    <p class="lg-sub">Guests are players without an HFECloud account. They are always treated as free for Clash. When a guest gets an account, use Link to user to turn them into a member.</p>
+
+    <form method="post" asp-action="AddGuest" class="lg-card">
+        <h2 class="lg-h2">Add a guest</h2>
+        <div class="lg-fieldgrid">
+            <partial name="_LeagueGuestFields" model="new LeagueGuestEditPageModel { Form = Model.Form, Errors = Model.Errors }" />
+        </div>
+        <div class="lg-savebar"><button class="lg-btn" type="submit">Add guest</button></div>
+    </form>
+
+    <section class="lg-card">
+        <nav class="lg-nav" aria-label="Guest filter">
+            <a class="lg-pill" aria-current="@(Model.Filter == LeagueGuestFilter.Unlinked ? "page" : null)" asp-action="Guests" asp-route-filter="@LeagueGuestFilter.Unlinked">Unlinked (@Model.UnlinkedCount)</a>
+            <a class="lg-pill" aria-current="@(Model.Filter == LeagueGuestFilter.Linked ? "page" : null)" asp-action="Guests" asp-route-filter="@LeagueGuestFilter.Linked">Linked (@Model.LinkedCount)</a>
+            <a class="lg-pill" aria-current="@(Model.Filter == LeagueGuestFilter.All ? "page" : null)" asp-action="Guests" asp-route-filter="@LeagueGuestFilter.All">All (@(Model.UnlinkedCount + Model.LinkedCount))</a>
+        </nav>
+        @if (showStatus)
+        {
+            <p class="lg-sub">Linked = members who used to be guests: links made with the link log, plus older links found by matches played as a guest (a guest who never played is not found).</p>
+        }
+        <h2 class="lg-h2">@heading (@Model.Guests.Count)</h2>
+        @if (Model.Guests.Count == 0)
+        {
+            <div class="lg-empty">@(Model.Filter == LeagueGuestFilter.Linked ? "No linked guests." : "No guests yet.")</div>
+        }
+        else
+        {
+            <div class="lg-table-wrap">
+                <table class="lg-table">
+                    <thead>
+                        <tr><th scope="col">Name</th>@(showStatus ? Html.Raw("<th scope=\"col\">Status</th>") : null)<th scope="col">Rank</th><th scope="col">Peak</th><th scope="col">Lanes</th><th scope="col">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model.Guests)
+                        {
+                            <tr>
+                                <td>@g.Name</td>
+                                @if (showStatus)
+                                {
+                                    <td>
+                                        @if (!g.IsLinked)
+                                        {
+                                            <span class="lg-muted">Guest</span>
+                                        }
+                                        else if (g.HasLog)
+                                        {
+                                            <span>Linked to <b>@g.UserLabel</b></span>
+                                            <span class="lg-muted lg-block">@g.LinkedUtc?.ToString("d MMM yyyy HH:mm") UTC, by @g.LinkedBy</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Linked to <b>@g.UserLabel</b></span>
+                                            <span class="lg-muted lg-block">older link, no log</span>
+                                        }
+                                    </td>
+                                }
+                                <td><img class="lg-badge" src="@Badge(g.CurTier)" alt="" /> @Rank(g.CurTier, g.CurDiv)</td>
+                                <td><img class="lg-badge" src="@Badge(g.PeakTier)" alt="" /> @Rank(g.PeakTier, g.PeakDiv)</td>
+                                <td><b>@LaneLabel(g.MainLane)</b>@(g.OtherLanes.Count > 0 ? ", " + string.Join(", ", g.OtherLanes.Select(LaneLabel)) : "")</td>
+                                <td class="lg-actions">
+                                    @if (g.IsLinked)
+                                    {
+                                        @* Linked members are not edited or deleted here. Only an older link with no log can be unlinked by hand. *@
+                                        @if (!g.HasLog && canUnlink)
+                                        {
+                                            <a class="lg-btn lg-btn-ghost" asp-action="UnlinkGuest" asp-route-id="@g.Id">Unlink</a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (canLink)
+                                        {
+                                            <a class="lg-btn lg-btn-ghost" asp-action="LinkGuest" asp-route-id="@g.Id">Link to user</a>
+                                        }
+                                        <a class="lg-btn lg-btn-ghost" asp-action="EditGuest" asp-route-id="@g.Id">Edit</a>
+                                        @if (canEditNames)
+                                        {
+                                            <a class="lg-btn lg-btn-ghost" asp-action="EditGuestNames" asp-route-id="@g.Id">Edit names</a>
+                                        }
+                                        <form method="post" asp-action="DeleteGuest" class="lg-inline"
+                                              onsubmit="return confirm('Delete this guest? This cannot be undone.');">
+                                            <input type="hidden" name="id" value="@g.Id" />
+                                            <button class="lg-btn lg-btn-danger" type="submit">Delete</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-profile.js" asp-append-version="true"></script>
+    <script src="~/js/league-settings.js" asp-append-version="true"></script>
+}

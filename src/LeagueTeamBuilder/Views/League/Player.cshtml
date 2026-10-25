@@ -1,0 +1,145 @@
+@using LeagueTeamBuilder.Services
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@model LeaguePlayerModel
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = Model.Name;
+    var canLeaderboard = await PermissionChecker.CanAccessAsync(User, "League", "Leaderboard");
+    var canHistory = await PermissionChecker.CanAccessAsync(User, "League", "History");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-overview.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-stats.css" asp-append-version="true" />
+}
+@section Scripts {
+    @* The rank pickers (badge list) of the admin editor; the script only enhances [data-lg-rank] blocks. *@
+    @if (Model.CanEditRank)
+    {
+        <script src="~/js/league-profile.js" asp-append-version="true"></script>
+    }
+}
+
+@* Step 8e: one player, read only, built from the PROFILE view of docs/league-overview-mockup.html.
+   Data: LeagueOverviewService.GetPlayerAsync (place, MVPs, games, win rate, pyramid) + LeagueHistoryService.GetPlayerStatsAsync
+   (the Step 5d numbers). MVPs, games and win rate = custom draft matches only; Clash and custom ARAM/Arena are counted apart (MVP redesign Step 5d). The "Match history" button (8h) opens History?player=id for a group with League > History; the lane
+   sliders with 8f, the badges with 8g. The rank editor shows only for a group with LeagueSettings > EditPlayerRank. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Player <em>profile</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"player"' />
+
+    @if (canLeaderboard)
+    {
+        <p class="lg-back"><a asp-controller="League" asp-action="Leaderboard">&larr; Leaderboard</a></p>
+    }
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string bad)
+    {
+        <div class="lg-alert lg-err" role="alert">@bad</div>
+    }
+
+    <div class="lg-grid">
+        <section class="lg-card lg-hero lg-c12" style="--h:@LeagueViewText.Hue(Model.Id)" aria-labelledby="lg-pl-name">
+            <div class="lg-hero-info">
+                @if (Model.IsGuest || Model.RankKing || Model.MvpKing || Model.ClashKing)
+                {
+                    <div>
+                        <partial name="_LeagueBadges" model="new LeagueBadgeModel(Model.RankKing, Model.MvpKing, false, Model.ClashKing)" />
+                        @if (Model.IsGuest)
+                        {
+                            <span class="lg-bd lg-bd-guest">Guest</span>
+                        }
+                    </div>
+                }
+                <h2 id="lg-pl-name">@Model.Name</h2>
+                <div class="lg-rk-big">
+                    <img class="lg-rk" src="~/img/ranks/@LeagueViewText.RankImage(Model.CurTier)" alt="" height="64" />
+                    <div>
+                        <b>@LeagueViewText.RankText(Model.CurTier, Model.CurDiv)</b>
+                        <small>Peak @LeagueViewText.RankText(Model.PeakTier, Model.PeakDiv) &middot; @LeaguePlayerRules.PlaceText(Model.Position, Model.TotalPlayers)</small>
+                    </div>
+                </div>
+                @if (canHistory)
+                {
+                    <div class="lg-hero-act"><a class="lg-btn lg-btn-ghost" asp-controller="League" asp-action="History" asp-route-player="@Model.Id">Match history</a></div>
+                }
+            </div>
+            <div class="lg-hero-pic" aria-hidden="true">@LeagueViewText.Initial(Model.Name)@if (!string.IsNullOrEmpty(Model.AvatarUrl)){<img class="lg-pimg" src="@Model.AvatarUrl" alt="" />}</div>
+        </section>
+
+        @if (Model.CanEditRank)
+        {
+            @* Its own card, not inside the hero: the hero clips its content, and the rank pickers open a list. *@
+            <section class="lg-card lg-adminedit lg-c12" aria-labelledby="lg-pl-admin">
+                <div class="lg-th"><h2 class="lg-h2" id="lg-pl-admin">Change rank</h2><span class="lg-sub lg-flush">admin only</span></div>
+                <form method="post" asp-controller="LeagueSettings" asp-action="EditPlayerRank" class="lg-adminedit-form">
+                    <input type="hidden" name="ProfileId" value="@Model.Id" />
+                    <partial name="_RankSelect" model='new LeagueRankSelectModel("Current rank", "CurTier", Model.CurTier, "CurDiv", Model.CurDiv)' />
+                    <partial name="_RankSelect" model='new LeagueRankSelectModel("Peak rank", "PeakTier", Model.PeakTier, "PeakDiv", Model.PeakDiv)' />
+                    <button class="lg-btn" type="submit">Save rank</button>
+                </form>
+                <p class="lg-sub lg-flush">The peak can't be lower than the current rank. Divisions are 1-4 below Master. This changes the league profile only, never the HFECloud account.</p>
+            </section>
+        }
+
+        @if (Model.CanEditNames)
+        {
+            <section class="lg-card lg-adminedit lg-c12" aria-labelledby="lg-pl-names">
+                <div class="lg-th"><h2 class="lg-h2" id="lg-pl-names">Change names</h2><span class="lg-sub lg-flush">needs the Edit player names permission</span></div>
+                <form method="post" asp-controller="LeagueSettings" asp-action="EditPlayerNames" class="lg-adminedit-form">
+                    <input type="hidden" name="ProfileId" value="@Model.Id" />
+                    <div class="lg-field">
+                        <label class="lg-lbl" for="lg-pl-ign">In-game name</label>
+                        <input id="lg-pl-ign" name="InGameName" class="lg-input" maxlength="40" value="@Model.Name" required />
+                    </div>
+                    <div class="lg-field">
+                        <label class="lg-lbl" for="lg-pl-riot">In-game ID <span class="lg-opt">(Riot ID, optional, name#tag)</span></label>
+                        <input id="lg-pl-riot" name="RiotId" class="lg-input" maxlength="64" value="@Model.RiotId" />
+                    </div>
+                    <button class="lg-btn" type="submit">Save names</button>
+                </form>
+                <p class="lg-sub lg-flush">Past matches show the new in-game name too. This changes the league profile only, never the HFECloud account.</p>
+            </section>
+        }
+
+        <section class="lg-card lg-c12" aria-labelledby="lg-pl-stats">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-pl-stats">Stats</h2><span class="lg-sub lg-flush">custom draft and Clash are counted apart</span></div>
+            @{ var clash = Model.Stats.Buckets.Clash; var aram = Model.Stats.Buckets.Aram; }
+            <h3 class="lgs-h3">Custom draft</h3>
+            <div class="lg-pstats">
+                <div class="lg-stat is-hl"><span class="lg-v lg-acc">@Model.Mvps</span><span class="lg-l">MVPs</span><span class="lg-s">custom draft matches</span></div>
+                <div class="lg-stat"><span class="lg-v">@Model.Games</span><span class="lg-l">Games</span><span class="lg-s">finished custom draft matches</span></div>
+                <div class="lg-stat"><span class="lg-v">@(Model.WinRate is int wr ? wr + "%" : "-")</span><span class="lg-l">Win rate</span><span class="lg-s">@(Model.Wins + Model.Losses == 0 ? "no result yet" : Model.Wins + " W - " + Model.Losses + " L")</span></div>
+            </div>
+            <h3 class="lgs-h3">Clash</h3>
+            <div class="lg-pstats">
+                <div class="lg-stat is-hl"><span class="lg-v lg-acc">@clash.Mvps</span><span class="lg-l">Clash MVPs</span><span class="lg-s">Clash games only</span></div>
+                <div class="lg-stat"><span class="lg-v">@clash.Games</span><span class="lg-l">Games</span><span class="lg-s">finished Clash games</span></div>
+                <div class="lg-stat"><span class="lg-v">@(clash.WinRate is int cwr ? cwr + "%" : "-")</span><span class="lg-l">Win rate</span><span class="lg-s">@(clash.Decided == 0 ? "no result yet" : clash.Wins + " W - " + clash.Losses + " L")</span></div>
+            </div>
+            @if (aram.Games > 0 || aram.Mvps > 0)
+            {
+                <p class="lg-sub lg-flush">Custom ARAM and Arena: @LeagueViewText.Plural(aram.Games, "game") and @aram.Mvps @(aram.Mvps == 1 ? "MVP" : "MVPs"). Not part of the numbers above.</p>
+            }
+        </section>
+
+        <div class="lg-c12">
+            <partial name="_LeagueMyStats" model="Model.Stats"
+                     view-data='new ViewDataDictionary(ViewData) { { "LgsOther", true }, { "LgsDetail", true }, { "LgsTitle", "Match numbers" } }' />
+        </div>
+
+        <section class="lg-card lg-c12" aria-labelledby="lg-pl-pyr">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-pl-pyr">Lane pyramid</h2></div>
+            <partial name="_LeaguePyramid" model="new LeaguePyramidModel(Model.Pyramid)" />
+            <p class="lg-sub lg-flush lg-pyr-note">4-5 = Mains, 3 = Kinda good, 1-2 = Basics. A lane at level 1 counts as not played.</p>
+        </section>
+    </div>
+</div>

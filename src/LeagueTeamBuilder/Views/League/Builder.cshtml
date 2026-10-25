@@ -1,0 +1,78 @@
+@model LeagueBuilderPageModel
+@using LeagueTeamBuilder.Services
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "Team builder";
+    var canGuests = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Guests");
+    var canSubmit = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Submit");
+    var canStart = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Start");
+    var canFinish = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Finish");
+    var canDelete = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Delete");
+    // Results/export step 1: the "Played on" box on the Finish dialog needs LeagueMatch > EditDate.
+    var canEditDate = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "EditDate");
+    var cfg = new
+    {
+        generateUrl = Url.Action("Generate", "League"),
+        guestsUrl = canGuests ? Url.Action("Guests", "LeagueSettings") : null,
+        iconBase = Url.Content("~/img/ranks/"),
+        modes = Model.Modes,
+        players = Model.Players,
+        lanes = Model.Lanes,
+        matches = Model.OpenMatches,
+        can = new { submit = canSubmit, start = canStart, finish = canFinish, delete = canDelete, editDate = canEditDate },
+        matchUrls = new
+        {
+            submit = Url.Action("Submit", "LeagueMatch"),
+            start = Url.Action("Start", "LeagueMatch"),
+            finish = Url.Action("Finish", "LeagueMatch"),
+            delete = Url.Action("Delete", "LeagueMatch"),
+        },
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-builder.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-result-image.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R3). Same data, same endpoints, same wording; only the page shell
+   and the stylesheet changed. The board itself is drawn by league-builder.js (unchanged). *@
+<div class="lg-page lgb-wide">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Team <em>builder</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"builder"' />
+    <p class="lg-sub">Pick a mode, tick who is playing, choose how to balance, then generate. Teams are built on the server; you can still swap or remove players by hand afterwards. When you are happy, submit the teams, start the match when everyone is in the lobby, and finish it to save the result.</p>
+
+    @Html.AntiForgeryToken()
+    <partial name="_LeagueSendConfig" />
+
+    <noscript><div class="lg-alert lg-err">The team builder needs JavaScript.</div></noscript>
+
+    @if (Model.Players.Count == 0)
+    {
+        <div class="lg-alert lg-err" role="status">
+            There are no league profiles yet. Members create theirs on <a asp-action="Profile">My league profile</a>@(canGuests ? "; guests are added in Settings > Guests." : ".")
+        </div>
+    }
+
+    <div id="lgb-app" class="lgb-app" data-guests="@(canGuests ? "1" : "0")"></div>
+
+    <div id="lgb-toast" class="lgb-toast" role="status" aria-live="polite"></div>
+    <dialog id="lgb-dlg" class="lgb-dlg" aria-labelledby="lgb-dlg-title"></dialog>
+
+    <script type="application/json" id="lgb-data">@Json.Serialize(cfg)</script>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-export.js" asp-append-version="true"></script>
+    <script src="~/js/league-time.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="~/js/league-send.js" asp-append-version="true"></script>
+    <script src="~/js/league-result-image.js" asp-append-version="true"></script>
+    <script src="~/js/league-auto-send.js" asp-append-version="true"></script>
+    <script src="~/js/league-builder.js" asp-append-version="true"></script>
+}

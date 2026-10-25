@@ -1,0 +1,157 @@
+@using System.Globalization
+@using LeagueTeamBuilder.Services
+@model List<LeagueModeSettings>
+@{
+    ViewData["Title"] = "League modes and map";
+    var inv = CultureInfo.InvariantCulture;
+    var normal = Model.First(m => m.Mode == LeagueMode.Normal);
+    var aram = Model.First(m => m.Mode == LeagueMode.Aram);
+    var arena = Model.First(m => m.Mode == LeagueMode.Arena);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R5). Same data, same forms and field names, same wording; only the page shell and classes changed. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Modes <em>and map</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Index">&larr; League settings</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <form method="post" asp-action="SaveModes" class="lg-card">
+        <h2 class="lg-h2">Players per mode</h2>
+        <p class="lg-sub">Each mode is set on its own. Nothing is hard-coded, so you can change Arena whenever Riot does. Normal Draft is lane based (5 lanes per team), so it tops out at 10. In Arena you choose the players and the teams; a team doesn't have to be full.</p>
+        <div class="lg-grid2">
+            <div class="lg-field">
+                <label class="lg-lbl" for="normal">Normal Draft (2-@LeagueModeRules.MaxPlayers(LeagueMode.Normal))</label>
+                <input id="normal" name="normal" type="number" class="lg-input" min="@LeagueModeRules.MinPlayers" max="@LeagueModeRules.MaxPlayers(LeagueMode.Normal)" value="@normal.PlayerCount" required />
+            </div>
+            <div class="lg-field">
+                <label class="lg-lbl" for="aram">ARAM (2-@LeagueModeRules.MaxPlayers(LeagueMode.Aram))</label>
+                <input id="aram" name="aram" type="number" class="lg-input" min="@LeagueModeRules.MinPlayers" max="@LeagueModeRules.MaxPlayers(LeagueMode.Aram)" value="@aram.PlayerCount" required />
+            </div>
+            <div class="lg-field">
+                <label class="lg-lbl" for="arena">Arena players (2-@LeagueModeRules.MaxPlayers(LeagueMode.Arena))</label>
+                <input id="arena" name="arena" type="number" class="lg-input" min="@LeagueModeRules.MinPlayers" max="@LeagueModeRules.MaxPlayers(LeagueMode.Arena)" value="@arena.PlayerCount" required />
+            </div>
+            <div class="lg-field">
+                <label class="lg-lbl" for="arenaTeams">Arena teams (@LeagueModeRules.MinArenaTeams-@LeagueModeRules.MaxArenaTeams)</label>
+                <input id="arenaTeams" name="arenaTeams" type="number" class="lg-input" min="@LeagueModeRules.MinArenaTeams" max="@LeagueModeRules.MaxArenaTeams" value="@(arena.TeamCount ?? LeagueModeRules.DefaultArenaTeams)" required />
+            </div>
+        </div>
+        <p class="lg-sub">Lowering the ARAM player count removes map positions that no longer exist.</p>
+        <div class="lg-savebar"><button class="lg-btn" type="submit">Save players per mode</button></div>
+    </form>
+
+    <section class="lg-card">
+        <h2 class="lg-h2">Map image per mode</h2>
+        <p class="lg-sub">Used as the background on the team builder. JPG, PNG or WebP, up to 5 MB. The shape of the image is kept exactly.</p>
+        <div class="lg-grid3">
+            @foreach (var m in Model)
+            {
+                var name = LeagueModeRules.Name(m.Mode);
+                <div class="lg-mapcard">
+                    <strong>@name</strong>
+                    @if (m.MapImageUrl is not null)
+                    {
+                        <div class="lg-thumb" style="background-image:url('@m.MapImageUrl');aspect-ratio:@(m.MapAspect.ToString("0.####", inv))" role="img" aria-label="@name map"></div>
+                    }
+                    else
+                    {
+                        <div class="lg-thumb lg-thumb-empty" style="aspect-ratio:16/9">No image yet</div>
+                    }
+                    <form method="post" asp-action="UploadMap" enctype="multipart/form-data" class="lg-mapform">
+                        <input type="hidden" name="mode" value="@((int)m.Mode)" />
+                        <label class="lg-lbl" for="img-@((int)m.Mode)">@(m.MapImageUrl is null ? "Upload" : "Change") image for @name</label>
+                        <input id="img-@((int)m.Mode)" name="image" type="file" class="lg-input" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required />
+                        <button class="lg-btn" type="submit">Upload</button>
+                    </form>
+                    @if (m.MapImageUrl is not null)
+                    {
+                        <form method="post" asp-action="RemoveMap" onsubmit="return confirm('Remove the @name map image?');">
+                            <input type="hidden" name="mode" value="@((int)m.Mode)" />
+                            <button class="lg-btn lg-btn-danger" type="submit">Remove image</button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <section id="spots">
+        <h2 class="lg-h2">Player positions on the map</h2>
+        <p class="lg-sub">On the team builder each player shows as a circle on their position. Fill in the X and Y fields (percent of the image), or use the map: click to drop the next circle, drag a circle to move it, or focus one and use the arrow keys (Shift = bigger steps). Leave a row empty for no position; with no positions the builder shows plain team cards. Arena has no map positions.</p>
+
+        @foreach (var m in new[] { normal, aram })
+        {
+            var perTeam = LeagueModeRules.SlotsPerTeam(m.Mode, m.PlayerCount);
+            var existing = m.Spots.ToDictionary(s => (s.Team, s.Slot));
+            var ratio = m.MapAspect.ToString("0.####", inv);
+            var i = 0;
+            var mapStyle = (m.MapImageUrl is null ? "" : "background-image:url('" + m.MapImageUrl + "');")
+                + "aspect-ratio:" + ratio + ";width:min(100%,calc(70vh * " + ratio + "))";
+            <form method="post" asp-action="SaveSpots" class="lg-card lg-spotform" data-lg-spots>
+                <input type="hidden" name="mode" value="@((int)m.Mode)" />
+                <div class="lg-copy">
+                    <h3 class="lg-h2">@LeagueModeRules.Name(m.Mode) <span class="lg-opt">(@perTeam per team)</span></h3>
+                    <span class="lg-sub" data-lg-next></span>
+                </div>
+                <div class="lg-map" data-lg-map style="@mapStyle">
+                    @if (m.MapImageUrl is null)
+                    {
+                        <span class="lg-map-ph" aria-hidden="true">@LeagueModeRules.Name(m.Mode) map placeholder</span>
+                    }
+                </div>
+                <div class="lg-table-wrap">
+                    <table class="lg-table">
+                        <thead><tr><th scope="col">Position</th><th scope="col">X %</th><th scope="col">Y %</th></tr></thead>
+                        <tbody>
+                            @for (var team = 0; team < 2; team++)
+                            {
+                                for (var slot = 0; slot < perTeam; slot++)
+                                {
+                                    var label = LeagueModeRules.SlotLabel(m.Mode, team, slot);
+                                    existing.TryGetValue((team, slot), out var sp);
+                                    var xv = sp is null ? "" : sp.X.ToString("0.#", inv);
+                                    var yv = sp is null ? "" : sp.Y.ToString("0.#", inv);
+                                    <tr data-lg-row data-team="@team" data-label="@label">
+                                        <td>
+                                            @label
+                                            <input type="hidden" name="spots[@i].Team" value="@team" />
+                                            <input type="hidden" name="spots[@i].Slot" value="@slot" />
+                                        </td>
+                                        <td><input name="spots[@i].X" data-lg-x type="number" class="lg-input lg-num" min="0" max="100" step="0.1" value="@xv" aria-label="@label X percent" /></td>
+                                        <td><input name="spots[@i].Y" data-lg-y type="number" class="lg-input lg-num" min="0" max="100" step="0.1" value="@yv" aria-label="@label Y percent" /></td>
+                                    </tr>
+                                    i++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="lg-savebar lg-gap">
+                    <button class="lg-btn lg-btn-ghost" type="button" data-lg-clear>Clear all</button>
+                    <button class="lg-btn" type="submit">Save @LeagueModeRules.Name(m.Mode) positions</button>
+                </div>
+            </form>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-settings.js" asp-append-version="true"></script>
+}

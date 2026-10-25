@@ -1,0 +1,173 @@
+@model LeagueProfilePageModel
+@using LeagueTeamBuilder.Services
+@{
+    ViewData["Title"] = "My league profile";
+    var f = Model.Form;
+    var pyramid = new LeaguePyramidModel(LeagueLaneLevels.Pyramid(f.Levels().Select(kv => new LaneLevel(kv.Key, kv.Value))), true);
+    string Err(string key) => Model.Errors.TryGetValue(key, out var m) ? m : string.Empty;
+    string LaneLabel(LeagueLane l) => l == LeagueLane.Adc ? "ADC" : l.ToString();
+    var catalogJson = System.Text.Json.JsonSerializer.Serialize(Model.Catalog.Select(c => new { i = c.Id, n = c.Name }));
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-overview.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-stats.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R2). Same model, same form fields, same actions and wording;
+   only the markup and styling changed. Styles: league.css + league-stats.css. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">My league <em>profile</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"profile"' />
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (Model.Errors.Count > 0)
+    {
+        <div class="lg-alert lg-err" role="alert">Please fix the highlighted fields and save again.</div>
+    }
+
+    <p class="lg-sub">This profile is only used by the League team builder. It is separate from your HFECloud profile: changing one never changes the other.</p>
+
+    @* Shown on first visit and kept afterwards as "copy again" (spec section 9). *@
+    @{
+        <div class="lg-card lg-copy">
+            <div>
+                <h2 class="lg-h2 lg-flush-h">@(Model.IsNew ? "Start from your HFECloud profile?" : "Copy from your HFECloud profile again?")</h2>
+                <span class="lg-sub lg-flush">Fills in your name and picture once. Nothing is saved until you press Save, and later changes to your HFECloud profile never change this one.</span>
+                @if (Model.CopiedFromMain)
+                {
+                    <span class="lg-ok-text" role="status">Name and picture copied into the form below. Press Save to keep them.</span>
+                }
+            </div>
+            <a class="lg-btn lg-btn-ghost" asp-action="Profile" asp-route-copyMain="true">Copy name and picture</a>
+        </div>
+    }
+
+    @* Step 5d: read-only numbers from the finished matches this profile played. *@
+    @if (!Model.IsNew && Model.Stats != null)
+    {
+        <partial name="_LeagueMyStats" model="Model.Stats" />
+    }
+
+    <form method="post" asp-action="Profile" enctype="multipart/form-data" class="lg-form lg-grid" novalidate>
+        <input type="hidden" name="UseMainAvatar" value="@(f.UseMainAvatar ? "true" : "false")" />
+
+        <section class="lg-card lg-c5" aria-labelledby="lg-player-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-player-title">Player</h2></div>
+            <div class="lg-field">
+                <label class="lg-lbl" for="InGameName">Display name</label>
+                <input id="InGameName" name="InGameName" class="lg-input" maxlength="40" value="@f.InGameName" required />
+                @if (Err("InGameName") != "") { <p class="lg-field-err" role="alert">@Err("InGameName")</p> }
+            </div>
+
+            <div class="lg-field">
+                <span class="lg-lbl">Picture</span>
+                <div class="lg-avatar-row">
+                    @if (!string.IsNullOrEmpty(Model.AvatarPreviewUrl))
+                    {
+                        <img class="lg-avatar" src="@Model.AvatarPreviewUrl" alt="Your league picture" />
+                    }
+                    else
+                    {
+                        <span class="lg-avatar lg-avatar-empty" aria-hidden="true">@(string.IsNullOrWhiteSpace(f.InGameName) ? "?" : f.InGameName.Trim()[..1].ToUpperInvariant())</span>
+                    }
+                    <div>
+                        <input type="file" name="Avatar" class="lg-file" accept=".jpg,.jpeg,.png,.webp" aria-label="Upload a different picture" />
+                        @if (!string.IsNullOrEmpty(Model.AvatarPreviewUrl))
+                        {
+                            <label class="lg-check"><input type="checkbox" name="RemoveAvatar" value="true" @(f.RemoveAvatar ? "checked" : null) /> Remove picture</label>
+                        }
+                    </div>
+                </div>
+                @if (Err("Avatar") != "") { <p class="lg-field-err" role="alert">@Err("Avatar")</p> }
+            </div>
+
+            <div class="lg-field">
+                <label class="lg-lbl" for="RiotId">Riot ID <span class="lg-opt">(optional, name#tag)</span></label>
+                <input id="RiotId" name="RiotId" class="lg-input" maxlength="64" value="@f.RiotId" />
+                @if (Err("RiotId") != "") { <p class="lg-field-err" role="alert">@Err("RiotId")</p> }
+            </div>
+        </section>
+
+        <section class="lg-card lg-c7" aria-labelledby="lg-rank-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-rank-title">Rank</h2></div>
+            <div class="lg-grid2">
+                <div>
+                    <partial name="_RankSelect" model='new LeagueRankSelectModel("Current rank", "CurTier", f.CurTier, "CurDiv", f.CurDiv)' />
+                    @if (Err("CurDiv") != "") { <p class="lg-field-err" role="alert">@Err("CurDiv")</p> }
+                </div>
+                <div>
+                    <partial name="_RankSelect" model='new LeagueRankSelectModel("Peak rank", "PeakTier", f.PeakTier, "PeakDiv", f.PeakDiv)' />
+                    @if (Err("PeakDiv") != "") { <p class="lg-field-err" role="alert">@Err("PeakDiv")</p> }
+                </div>
+            </div>
+            @if (Err("Rank") != "") { <p class="lg-field-err" role="alert">@Err("Rank")</p> }
+            @if (Err("Peak") != "") { <p class="lg-field-err" role="alert">@Err("Peak")</p> }
+        </section>
+
+        @* Step 8f: five 1-5 sliders and the live pyramid replace the "I play this lane" tick and the main-lane radio.
+           The main lane is the highest level (worked out on save). A lane at level 1 is not played: no champions. *@
+        <section class="lg-card lg-c5" aria-labelledby="lg-pyr-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-pyr-title">Lane pyramid</h2></div>
+            <partial name="_LeaguePyramid" model="pyramid" />
+            <p class="lg-sub lg-flush lg-pyr-note">Built from the sliders next to it: 4-5 = Mains, 3 = Kinda good, 1-2 = Basics. Your main lane is your highest one.</p>
+        </section>
+
+        <section class="lg-card lg-c7" aria-labelledby="lg-levels-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-levels-title">How much do you like each lane?</h2></div>
+            @if (Err("Lanes") != "") { <p class="lg-field-err" role="alert">@Err("Lanes")</p> }
+            <partial name="_LeagueLaneSliders" model="new LeagueLaneSlidersModel(f.Levels())" />
+        </section>
+
+        <section class="lg-card lg-c12" aria-labelledby="lg-lanes-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-lanes-title">Champions</h2></div>
+            <p class="lg-sub">Add the champions you play in each lane you rated above 1. A lane at 1 has no champions.</p>
+            @if (Err("Champs") != "") { <p class="lg-field-err" role="alert">@Err("Champs")</p> }
+
+            <div class="lg-lanes">
+            @foreach (var lane in Enum.GetValues<LeagueLane>())
+            {
+                <fieldset class="lg-lane" data-lg-champ-lane="@lane" hidden="@(f.LevelFor(lane) <= 1)">
+                    <legend>@LaneLabel(lane)</legend>
+                    <div class="lg-lane-champs" data-lg-lane-champs>
+                        <partial name="_ChampionPicker" model='new LeagueChampionPickerModel(lane, lane + "Champs", Model.Selected[lane])' />
+                    </div>
+                </fieldset>
+            }
+            </div>
+        </section>
+
+        <section class="lg-card lg-c5" aria-labelledby="lg-with-title">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-with-title">Plays better with</h2></div>
+            <div class="lg-field">
+                <label class="lg-lbl" for="DoBetterWithId">Do better with <span class="lg-opt">(optional, informational only)</span></label>
+                <select id="DoBetterWithId" name="DoBetterWithId" class="lg-select">
+                    <option value="">Nobody in particular</option>
+                    @foreach (var p in Model.OtherProfiles)
+                    {
+                        <option value="@p.Id" selected="@(f.DoBetterWithId == p.Id)">@p.Name</option>
+                    }
+                </select>
+                @if (Err("DoBetterWith") != "") { <p class="lg-field-err" role="alert">@Err("DoBetterWith")</p> }
+            </div>
+        </section>
+
+        <div class="lg-savebar lg-c7">
+            <button type="submit" class="lg-btn">Save league profile</button>
+        </div>
+    </form>
+
+    <script type="application/json" id="lg-champ-catalog">@Html.Raw(catalogJson)</script>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-profile.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,167 @@
+@model LeagueClashPageModel
+@using LeagueTeamBuilder.Services
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "Clash";
+    var canSchedule = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "ClashSchedule");
+    var ev = Model.Selected;
+    // Step 6e3: Save game, Start and Finish use the LeagueMatch endpoints, so the buttons follow those permissions.
+    var canSubmit = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Submit");
+    var canStart = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Start");
+    var canFinish = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "Finish");
+    // Results/export step 1: the "Played on" box on the Finish game dialog needs LeagueMatch > EditDate.
+    var canEditDate = await PermissionChecker.CanAccessAsync(User, "LeagueMatch", "EditDate");
+    // Step 6e4b: the End clash button calls POST /LeagueClash/EndClash (6e4a), its own permission.
+    var canEnd = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "EndClash");
+    // Step 6e4e: the Next game button calls POST /LeagueClash/NextGame (6e4d), its own permission.
+    var canNext = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "NextGame");
+    // Step 8i: the Busy button on a guest row calls POST /LeagueClash/SetGuestBusy, its own permission.
+    var canGuestBusy = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "SetGuestBusy");
+    // Step 11d: the team cards. + New team, Rename and Delete call the three 11c endpoints, each its own permission.
+    var canCreateTeam = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "CreateTeam");
+    var canRenameTeam = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "RenameTeam");
+    var canDeleteTeam = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "DeleteTeam");
+    // Step 12d/12g: the Progress image button calls GET /LeagueExport/Render?kind=clash (LeagueExport > Render).
+    var canProgress = await PermissionChecker.CanAccessAsync(User, "LeagueExport", "Render");
+    var cfg = new
+    {
+        buildUrl = Url.Action("Build", "LeagueClash"),
+        eventId = Model.SelectedId,
+        mode = ev == null ? "normal" : LeagueBuilderService.ModeKey(ev.Mode),
+        iconBase = Url.Content("~/img/ranks/"),
+        players = Model.Players,
+        lanes = Model.Lanes,
+        answeredBusy = Model.AnsweredBusy,
+        answeredFree = Model.AnsweredFree,
+        hasTiers = Model.HasTiers,
+        submitUrl = Url.Action("Submit", "LeagueMatch"),
+        startUrl = Url.Action("Start", "LeagueMatch"),
+        finishUrl = Url.Action("Finish", "LeagueMatch"),
+        endUrl = Url.Action("EndClash", "LeagueClash"),
+        nextUrl = Url.Action("NextGame", "LeagueClash"),
+        guestBusyUrl = Url.Action("SetGuestBusy", "LeagueClash"),
+        createTeamUrl = Url.Action("CreateTeam", "LeagueClash"),
+        renameTeamUrl = Url.Action("RenameTeam", "LeagueClash"),
+        deleteTeamUrl = Url.Action("DeleteTeam", "LeagueClash"),
+        teams = Model.Teams,
+        maxTeams = LeagueClashTeamRules.MaxTeams,
+        maxTeamName = LeagueClashTeamRules.MaxNameLength,
+        canCreateTeam,
+        canRenameTeam,
+        canDeleteTeam,
+        canSubmit,
+        canStart,
+        canFinish,
+        canEditDate,
+        canEnd,
+        canNext,
+        canGuestBusy,
+        canProgress,
+        progressUrl = Url.Action("Render", "LeagueExport", new { kind = "clash" }),
+        eventStatus = ev == null ? "" : (ev.Status == LeagueClashStatus.InProgress ? "inprogress" : "open"),
+        maxGames = LeagueClashGameRules.MaxGames,
+        games = Model.Games,
+        // Step 6e6a/6e6b: what the Discord picture needs (the Export for Discord button on the team card).
+        eventTitle = ev?.Title ?? "",
+        modeName = ev == null ? "" : LeagueModeRules.Name(ev.Mode),
+        mapUrl = Model.MapUrl,
+        // E4: the map picture (player places and map shape of the mode).
+        mapAspect = Model.MapAspect,
+        spots = Model.Spots,
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-builder.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-clash.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-result-image.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Poppins:wght@800;900&display=swap" rel="stylesheet">
+}
+
+@* Step 6d. Built in the League style (league.css tokens, league-builder.css slot and dialog classes, league-clash.css for lgc-*).
+   The team is built on the server (POST /LeagueClash/Build); league-clash-board.js only renders and does the by-hand edits. *@
+<div class="lg-page lgb-wide">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Clash <em>team</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"clash"' />
+
+    @if (Model.Notice != null)
+    {
+        <div class="lg-alert lg-err" role="status">@Model.Notice</div>
+    }
+
+    @if (ev == null)
+    {
+        <section class="lg-card lgc-empty">
+            <h2 class="lg-h2">No clash to build for</h2>
+            <p class="lg-sub">The Clash page works on a scheduled clash. There is no open or running clash right now.</p>
+            @if (canSchedule)
+            {
+                <a class="lg-btn" asp-controller="LeagueSettings" asp-action="ClashSchedule">Schedule a clash</a>
+            }
+            else
+            {
+                <p class="lgc-meta">Ask someone who can schedule clashes to add one.</p>
+            }
+        </section>
+    }
+    else
+    {
+        <section class="lg-card lgcb-event" aria-label="Clash">
+            <form method="get" asp-action="Index" class="lgcb-pick">
+                <label class="lgcb-pick-l" for="lgcb-event">Clash</label>
+                <select id="lgcb-event" name="id" class="lg-select" data-lgcb-event>
+                    @foreach (var e in Model.Events)
+                    {
+                        <option value="@e.Id" selected="@(e.Id == Model.SelectedId)">@e.Title · @LeagueHistoryFormat.Plain(e.StartsAtUtc)@(e.Status == LeagueClashStatus.InProgress ? " · in progress" : "")</option>
+                    }
+                </select>
+                <noscript><button type="submit" class="lg-btn lg-btn-ghost">Show</button></noscript>
+            </form>
+            <div id="lgcb-teams" class="lgcb-teams" aria-label="Teams"></div>
+            <div class="lgcb-facts">
+                <time data-lgc-time data-lgc-long datetime="@LeagueHistoryFormat.Iso(ev.StartsAtUtc)">@LeagueHistoryFormat.Plain(ev.StartsAtUtc)</time>
+                <span class="lgc-badge">@LeagueClashScheduleService.ModeName(ev.Mode)</span>
+                <span data-lgcb-status class="lgc-badge @(ev.Status == LeagueClashStatus.InProgress ? "lgc-st-live" : "lgc-st-open")">@LeagueClashScheduleService.StatusName(ev.Status)</span>
+            </div>
+            <div class="lgcb-record" role="group" aria-label="Series record">
+                <div><small>Series record</small><strong data-lgcb-record>@Model.Record.Text</strong></div>
+                <div><small>Games saved</small><strong data-lgcb-games>@Model.Record.Games</strong></div>
+            </div>
+        </section>
+
+        @Html.AntiForgeryToken()
+        <partial name="_LeagueSendConfig" />
+        <noscript><div class="lg-alert lg-err">The Clash page needs JavaScript.</div></noscript>
+
+        @if (Model.Players.Count == 0)
+        {
+            <div class="lg-alert lg-err" role="status">There are no league profiles yet, so there is nobody to build a team from.</div>
+        }
+
+        <div id="lgcb-app" class="lgcb-app"></div>
+
+        <div id="lgb-toast" class="lgb-toast" role="status" aria-live="polite"></div>
+        <dialog id="lgcb-dlg" class="lgb-dlg" aria-labelledby="lgcb-dlg-title"></dialog>
+
+        <script type="application/json" id="lgcb-data">@Json.Serialize(cfg)</script>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/league-clash.js" asp-append-version="true"></script>
+    @if (ev != null)
+    {
+        <script src="~/js/league-export.js" asp-append-version="true"></script>
+        <script src="~/js/league-time.js" asp-append-version="true"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <script src="~/js/league-send.js" asp-append-version="true"></script>
+        <script src="~/js/league-result-image.js" asp-append-version="true"></script>
+        <script src="~/js/league-auto-send.js" asp-append-version="true"></script>
+        <script src="~/js/league-clash-board.js" asp-append-version="true"></script>
+    }
+}

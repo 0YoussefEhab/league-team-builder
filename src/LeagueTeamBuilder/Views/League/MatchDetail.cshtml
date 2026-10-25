@@ -1,0 +1,50 @@
+@model LeagueMatchDetailModel
+@{
+    ViewData["Title"] = "Match - " + Model.ModeName;
+    var cfg = new
+    {
+        deleteUrl = Url.Action("Delete", "LeagueMatch"),
+        editResultUrl = Url.Action("EditResult", "LeagueMatch"),
+        editDateUrl = Url.Action("EditDate", "LeagueMatch"),
+        statsUrl = Url.Action("Stats", "LeagueMatch"),
+        importUrl = Url.Action("ImportStats", "LeagueMatch"),
+        setMvpUrl = Url.Action("SetMvp", "LeagueMatch"),
+        historyUrl = Url.Action("History", "League"),
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-history.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-result-image.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Poppins:wght@800;900&display=swap" rel="stylesheet">
+}
+
+<div class="lg-page lgh-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Match <em>detail</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"history"' />
+    <p class="lg-back"><a asp-action="History">&larr; Back to match history</a></p>
+
+    @Html.AntiForgeryToken()
+    <partial name="_LeagueSendConfig" />
+
+    <div class="lg-card lgh-full">
+        <partial name="_MatchDetail" model="Model" />
+    </div>
+
+    <div id="lgh-toast" class="lgh-toast" role="status" aria-live="polite"></div>
+    <script type="application/json" id="lgh-data">@Json.Serialize(cfg)</script>
+</div>
+
+@section Scripts {
+    <script src="~/js/league-time.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="~/js/league-send.js" asp-append-version="true"></script>
+    <script src="~/js/league-result-image.js" asp-append-version="true"></script>
+    <script src="~/js/league-stats-import.js" asp-append-version="true"></script>
+    <script src="~/js/league-history.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,112 @@
+@model LeagueTiersPageModel
+@{
+    ViewData["Title"] = "League custom tiers";
+    var tiers = Model.Tiers;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R5). Same data, same forms and field names, same wording; only the page shell and classes changed. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Custom <em>tiers</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Index">&larr; League settings</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <p class="lg-sub">An internal ranking, separate from real League rank, used by balancing mode 4 to correct for players whose rank doesn't match their skill. The top of the list is the strongest tier. Removing a tier moves its players to the tier above it (or below, if it was the top one). A player with no tier is balanced by rank instead.</p>
+
+    <div class="lg-grid">
+    <form method="post" asp-action="AddTier" class="lg-card lg-inline-form lg-c12">
+        <div class="lg-field">
+            <label class="lg-lbl" for="newTier">New tier name (added at the bottom)</label>
+            <input id="newTier" name="name" class="lg-input" maxlength="40" required />
+        </div>
+        <button class="lg-btn" type="submit">Add tier</button>
+    </form>
+
+        <section class="lg-card lg-c6">
+            <h2 class="lg-h2">Tiers, strongest first</h2>
+            @if (tiers.Count == 0)
+            {
+                <div class="lg-empty">No tiers yet.</div>
+            }
+            @for (var i = 0; i < tiers.Count; i++)
+            {
+                var t = tiers[i].Tier;
+                <div class="lg-tierrow">
+                    <span class="lg-tiernum" aria-hidden="true">@(i + 1)</span>
+                    <form method="post" asp-action="RenameTier" class="lg-inline lg-grow">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <input name="name" value="@t.Name" class="lg-input" maxlength="40" aria-label="Name of tier @(i + 1)" />
+                        <button class="lg-btn lg-btn-ghost" type="submit">Rename</button>
+                    </form>
+                    <small class="lg-muted">@tiers[i].PlayerCount player(s)</small>
+                    <form method="post" asp-action="MoveTier" class="lg-inline">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <input type="hidden" name="up" value="true" />
+                        <button class="lg-btn lg-btn-ghost lg-ib" type="submit" aria-label="Move @t.Name up" disabled="@(i == 0)">&uarr;</button>
+                    </form>
+                    <form method="post" asp-action="MoveTier" class="lg-inline">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <input type="hidden" name="up" value="false" />
+                        <button class="lg-btn lg-btn-ghost lg-ib" type="submit" aria-label="Move @t.Name down" disabled="@(i == tiers.Count - 1)">&darr;</button>
+                    </form>
+                    <form method="post" asp-action="RemoveTier" class="lg-inline"
+                          onsubmit="return confirm('Remove this tier? Its @(tiers[i].PlayerCount) player(s) move to a neighbouring tier.');">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <button class="lg-btn lg-btn-danger lg-ib" type="submit" aria-label="Remove @t.Name">&#10005;</button>
+                    </form>
+                </div>
+            }
+        </section>
+
+        <section class="lg-card lg-c6">
+            <h2 class="lg-h2">Who is in which tier</h2>
+            @if (Model.Players.Count == 0)
+            {
+                <div class="lg-empty">Players appear here once profiles exist.</div>
+            }
+            else if (tiers.Count == 0)
+            {
+                <div class="lg-empty">Add a tier first, then assign players to it.</div>
+            }
+            else
+            {
+                <div class="lg-scroll">
+                    @foreach (var p in Model.Players)
+                    {
+                        <form method="post" asp-action="SetPlayerTier" class="lg-tierrow">
+                            <input type="hidden" name="profileId" value="@p.ProfileId" />
+                            <div class="lg-grow">
+                                <b>@p.Name</b>@(p.IsGuest ? " (guest)" : "")
+                                <small class="lg-muted lg-block">@p.Rank@(p.Div is int d ? " " + d : "")</small>
+                            </div>
+                            <select name="tierId" class="lg-select lg-w150" aria-label="Custom tier for @p.Name">
+                                <option value="" selected="@(p.TierId is null)">No tier</option>
+                                @foreach (var t in tiers)
+                                {
+                                    <option value="@t.Tier.Id" selected="@(p.TierId == t.Tier.Id)">@t.Tier.Name</option>
+                                }
+                            </select>
+                            <button class="lg-btn lg-btn-ghost" type="submit">Save</button>
+                        </form>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>

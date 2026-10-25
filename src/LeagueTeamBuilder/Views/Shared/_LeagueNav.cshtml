@@ -1,0 +1,48 @@
+@model string
+@using LeagueTeamBuilder.Services
+@inject IPermissionChecker PermissionChecker
+@*
+    Pill sub-nav for the League pages. Model = the active page: "home", "profile", "builder", "clash", "history", "leaderboard", "settings", "champions".
+    Links are shown only if the signed-in user may open them (same CanAccessAsync checks as the
+    sidebar); the controllers still enforce access. Nothing here links to the main profile.
+*@
+@{
+    var canProfile = await PermissionChecker.CanAccessAsync(User, "League", "Profile");
+    var canBuilder = await PermissionChecker.CanAccessAsync(User, "League", "Builder");
+    var canClash = await PermissionChecker.CanAccessAsync(User, "LeagueClash", "Index");
+    var canHistory = await PermissionChecker.CanAccessAsync(User, "League", "History");
+    var canLeaderboard = await PermissionChecker.CanAccessAsync(User, "League", "Leaderboard");
+    var canSettings = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Index");
+    var canChampions = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Champions");
+}
+<nav class="lg-nav" aria-label="League">
+    <a class="lg-pill" aria-current="@(Model == "home" ? "page" : null)" asp-controller="League" asp-action="Index">Overview</a>
+    @if (canProfile)
+    {
+        <a class="lg-pill" aria-current="@(Model == "profile" ? "page" : null)" asp-controller="League" asp-action="Profile">My league profile</a>
+    }
+    @if (canBuilder)
+    {
+        <a class="lg-pill" aria-current="@(Model == "builder" ? "page" : null)" asp-controller="League" asp-action="Builder">Team builder</a>
+    }
+    @if (canClash)
+    {
+        <a class="lg-pill" aria-current="@(Model == "clash" ? "page" : null)" asp-controller="LeagueClash" asp-action="Index">Clash</a>
+    }
+    @if (canHistory)
+    {
+        <a class="lg-pill" aria-current="@(Model == "history" ? "page" : null)" asp-controller="League" asp-action="History">History</a>
+    }
+    @if (canLeaderboard)
+    {
+        <a class="lg-pill" aria-current="@(Model == "leaderboard" ? "page" : null)" asp-controller="League" asp-action="Leaderboard">Leaderboard</a>
+    }
+    @if (canSettings)
+    {
+        <a class="lg-pill" aria-current="@(Model == "settings" ? "page" : null)" asp-controller="LeagueSettings" asp-action="Index">Settings</a>
+    }
+    @if (canChampions)
+    {
+        <a class="lg-pill" aria-current="@(Model == "champions" ? "page" : null)" asp-controller="LeagueSettings" asp-action="Champions">Champions</a>
+    }
+</nav>

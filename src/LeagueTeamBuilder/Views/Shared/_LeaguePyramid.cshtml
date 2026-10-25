@@ -1,0 +1,37 @@
+@model LeaguePyramidModel
+@using LeagueTeamBuilder.Services
+@*
+    Lane pyramid (Step 8e, shared in 8f): Mains on top, Kinda good in the middle, Basics at the bottom
+    (LeagueLaneLevels.Pyramid; 4-5 Mains, 3 Kinda good, 1-2 Basics). With Live = true the profile page rebuilds it
+    in the browser while a lane slider moves (league-profile.js, enhanceLevels); same markup, same classes.
+*@
+@{
+    var tiers = new[]
+    {
+        new { Tier = LeagueLaneTier.Mains, Css = "lg-t1", Label = "Mains" },
+        new { Tier = LeagueLaneTier.KindaGood, Css = "lg-t2", Label = "Kinda good" },
+        new { Tier = LeagueLaneTier.Basics, Css = "lg-t3", Label = "Basics" },
+    };
+}
+<div class="lg-pyr" data-lg-pyr="@(Model.Live ? "live" : null)">
+    @foreach (var t in tiers)
+    {
+        var lanes = Model.Tiers.TryGetValue(t.Tier, out var list) ? list : new List<LaneLevel>();
+        <div class="lg-ptier @t.Css">
+            <span class="lg-ptl">@t.Label</span>
+            <div class="lg-lns">
+                @if (lanes.Count == 0)
+                {
+                    <span class="lg-pnone">none</span>
+                }
+                else
+                {
+                    foreach (var l in lanes)
+                    {
+                        <span class="lg-lnb @(l.Level == 1 ? "is-dim" : "")">@LeagueViewText.LaneName(l.Lane)</span>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>

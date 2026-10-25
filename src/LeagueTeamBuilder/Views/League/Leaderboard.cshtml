@@ -1,0 +1,175 @@
+@using System.Globalization
+@using LeagueTeamBuilder.Services
+@model LeagueLeaderboardModel
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "Leaderboard";
+    // Step 8e: rows link to the player page, with a "View profile" column, only for a group that may open League > Player.
+    var canPlayer = await PermissionChecker.CanAccessAsync(User, "League", "Player");
+    var q = Model.Query;
+    var rows = Model.Rows;
+    var kinds = new[]
+    {
+        new { Key = "all", Text = "All", Kind = LeagueLeaderboardKind.All },
+        new { Key = "members", Text = "Members", Kind = LeagueLeaderboardKind.Members },
+        new { Key = "guests", Text = "Guests", Kind = LeagueLeaderboardKind.Guests },
+    };
+    // Leaderboard step L2: "Sort: score" is first (it is the default sort, see LeagueLeaderboardRules.DefaultSort).
+    var sorts = new[]
+    {
+        new { Text = "Sort: score", Sort = LeagueLeaderboardSort.Score },
+        new { Text = "Sort: rank", Sort = LeagueLeaderboardSort.Rank },
+        new { Text = "Sort: MVPs", Sort = LeagueLeaderboardSort.Mvps },
+        new { Text = "Sort: Clash MVPs", Sort = LeagueLeaderboardSort.ClashMvps },
+        new { Text = "Sort: games", Sort = LeagueLeaderboardSort.Games },
+        new { Text = "Sort: win rate", Sort = LeagueLeaderboardSort.WinRate },
+    };
+    // Leaderboard step L2: under the Score sort the big number counts the players who HAVE a score (1, 2, 3...); under every
+    // other sort it stays the Position in the full ranking, as before.
+    var byScore = q.Sort == LeagueLeaderboardSort.Score;
+    var scoreCount = 0;
+    // Leaderboard step L2: did the address carry a sort? league-leaderboard.js uses it to leave the dropdown out of the address
+    // when the person never touched it (so picking a rank with no sort chosen = Rank order, see LeagueLeaderboardRules.DefaultSort).
+    var sortInAddress = !string.IsNullOrWhiteSpace(Context.Request.Query["sort"]);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-overview.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/league-leaderboard.js" asp-append-version="true"></script>
+}
+
+@* Step 8d: the Leaderboard, built from the LEADERBOARD view of docs/league-overview-mockup.html.
+   Search, filters and sort run on the server (GET form), so the page works without JavaScript; the small script only
+   submits the form when a filter changes. Step 8e: a row is an <a> to the player page (League > Player) with a "View profile"
+   column; without that permission the <a> has no href and the row stays plain. Badges (#1 rank, MVP king) come in 8g.
+   MVP redesign Step 5c: MVPs, Games and Win % = custom DRAFT matches only; Clash MVPs is its own column and sort.
+   Leaderboard step L2: "Sort: score" (default) + an "Avg score" column (LeagueLeaderboardRow.AvgScore, 2 decimals; "N more games" greyed
+   until HasScore); the place number follows the sort; a one-line note explains the score. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Leader<em>board</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"leaderboard"' />
+
+    <section class="lg-card" aria-label="Filter the leaderboard">
+        <form method="get" id="lg-lb-form" class="lg-lb-tools" role="search" asp-controller="League" asp-action="Leaderboard">
+            <div class="lg-lb-row1">
+                <input class="lg-input lg-lb-search" type="search" name="q" value="@q.Search" maxlength="@LeagueLeaderboardRules.MaxSearchLength"
+                       placeholder="Search a player..." aria-label="Search a player" />
+                <div class="lg-seg" role="radiogroup" aria-label="Members or guests">
+                    @foreach (var k in kinds)
+                    {
+                        <label><input type="radio" name="kind" value="@k.Key" checked="@(q.Kind == k.Kind)" /><span>@k.Text</span></label>
+                    }
+                </div>
+                <select class="lg-select lg-lb-sel" name="lane" aria-label="Main lane">
+                    <option value="">Any main lane</option>
+                    @foreach (var l in LeagueLaneLevels.AllLanes)
+                    {
+                        <option value="@LeagueLeaderboardRules.LaneKey(l)" selected="@(q.Lane == l)">@LeagueViewText.LaneName(l) main</option>
+                    }
+                </select>
+                <select class="lg-select lg-lb-sel" name="sort" aria-label="Sort by" data-chosen="@(sortInAddress ? "1" : "0")">
+                    @foreach (var s in sorts)
+                    {
+                        <option value="@LeagueLeaderboardRules.SortKey(s.Sort)" selected="@(q.Sort == s.Sort)">@s.Text</option>
+                    }
+                </select>
+                <button type="submit" class="lg-btn">Search</button>
+                @if (q.HasFilter)
+                {
+                    <a class="lg-btn lg-btn-ghost" asp-controller="League" asp-action="Leaderboard">Clear</a>
+                }
+            </div>
+            <div class="lg-rchips" role="radiogroup" aria-label="Current rank">
+                <label class="lg-rchip"><input type="radio" name="rank" value="" checked="@(q.Rank == null)" /><span>All ranks</span></label>
+                @foreach (var r in Enum.GetValues<LeagueRank>())
+                {
+                    <label class="lg-rchip"><input type="radio" name="rank" value="@((int)r)" checked="@(q.Rank == r)" /><span><img class="lg-rk" src="~/img/ranks/@LeagueViewText.RankImage(r)" alt="" height="20" /> @r</span></label>
+                }
+            </div>
+        </form>
+    </section>
+
+    @if (Model.TotalPlayers == 0)
+    {
+        <p class="lg-empty">No players yet. Set up your league profile and you will show up here.</p>
+    }
+    else
+    {
+        <p class="lg-sub lg-lb-count" role="status">Showing @rows.Count of @LeagueViewText.Plural(Model.TotalPlayers, "player"). @(byScore ? "Place follows the average match score." : "Place is the rank order: current rank, then peak rank, then MVPs.") MVPs, games and win rate count custom draft matches only; Clash MVPs count Clash games.</p>
+        @if (rows.Count == 0)
+        {
+            <p class="lg-empty">No players match these filters.</p>
+        }
+        else
+        {
+            <div class="lg-lb-head @(canPlayer ? "has-view" : "")" aria-hidden="true">
+                <span>#</span><span>Player</span><span>Rank</span><span>Main lanes</span>
+                <span class="lg-lb-n">Avg score</span><span class="lg-lb-n">MVPs</span><span class="lg-lb-n">Clash MVPs</span><span class="lg-lb-n">Games</span><span class="lg-lb-n">Win %</span>
+                @if (canPlayer)
+                {
+                    <span></span>
+                }
+            </div>
+            @foreach (var p in rows)
+            {
+                // Leaderboard step L2: the place shown. Score sort: 1, 2, 3... for players with a score, none for the rest
+                // (the rows are already ordered with them first). Any other sort: the Position in the full ranking, as before.
+                int? place = null;
+                if (!byScore) place = p.Position;
+                else if (p.HasScore) place = ++scoreCount;
+                <a class="lg-lb-r @(place != null && place.Value <= 3 ? "is-top" : "") @(canPlayer ? "has-view" : "")" style="--h:@LeagueViewText.Hue(p.Id)" href="@(canPlayer ? Url.Action("Player", "League", new { id = p.Id }) : null)">
+                    <span class="lg-lb-pos">@if (place != null) { <span class="lg-sr">Place </span>@place.Value } else { <span class="lg-sr">No place yet</span><span aria-hidden="true">&ndash;</span> }</span>
+                    <span class="lg-lb-who">
+                        <span class="lg-av lg-av-m @(p.IsGuest ? "is-guest" : "")" aria-hidden="true"><b>@LeagueViewText.Initial(p.Name)</b>@if (!string.IsNullOrEmpty(p.AvatarUrl)){<img class="lg-pimg" src="@p.AvatarUrl" alt="" loading="lazy" />}</span>
+                        <span class="lg-lb-t">
+                            <span class="lg-lb-name">@p.Name</span>
+                            @if (p.RankKing || p.MvpKing || p.ClashKing)
+                            {
+                                <partial name="_LeagueBadges" model="new LeagueBadgeModel(p.RankKing, p.MvpKing, false, p.ClashKing)" />
+                            }
+                            @if (p.IsGuest)
+                            {
+                                <span class="lg-bd lg-bd-guest">Guest</span>
+                            }
+                            <span class="lg-lb-sub">@LeagueViewText.RankText(p.CurTier, p.CurDiv) &middot; @(p.HasScore ? "Score " + p.AvgScore!.Value.ToString("0.00", CultureInfo.InvariantCulture) : p.GamesToScore + (p.GamesToScore == 1 ? " more game" : " more games") + " for a score") &middot; @p.Mvps @(p.Mvps == 1 ? "MVP" : "MVPs") @(p.ClashMvps > 0 ? "(" + p.ClashMvps + " Clash)" : "") &middot; @LeagueViewText.Plural(p.Games, "game") &middot; @(p.WinRate is int wr ? wr + "%" : "no result yet")</span>
+                        </span>
+                    </span>
+                    <span class="lg-lb-rk lg-hide-s">
+                        <img class="lg-rk lg-rk-s" src="~/img/ranks/@LeagueViewText.RankImage(p.CurTier)" alt="" height="22" />
+                        <span>@LeagueViewText.RankText(p.CurTier, p.CurDiv)<small>Peak @LeagueViewText.RankText(p.PeakTier, p.PeakDiv)</small></span>
+                    </span>
+                    <span class="lg-lanes-mini lg-hide-s">
+                        @foreach (var lane in p.Mains)
+                        {
+                            <span class="lg-ln lg-ln-m" title="@LeagueViewText.LaneName(lane)">@LeagueViewText.LaneShort(lane)</span>
+                        }
+                    </span>
+                    @if (p.HasScore)
+                    {
+                        <span class="lg-lb-n lg-lb-sc lg-hide-s">@(p.AvgScore!.Value.ToString("0.00", CultureInfo.InvariantCulture))</span>
+                    }
+                    else
+                    {
+                        <span class="lg-lb-n lg-lb-sc is-wait lg-hide-s" title="The score needs @LeagueLeaderboardRules.MinScoredGames scored games; @p.ScoredGames so far.">@p.GamesToScore @(p.GamesToScore == 1 ? "more game" : "more games")</span>
+                    }
+                    <span class="lg-lb-n lg-lb-mv lg-hide-s">@p.Mvps</span>
+                    <span class="lg-lb-n lg-hide-s">@p.ClashMvps</span>
+                    <span class="lg-lb-n lg-hide-s">@p.Games</span>
+                    <span class="lg-lb-n lg-hide-s">@(p.WinRate is int w ? w + "%" : "-")</span>
+                    @if (canPlayer)
+                    {
+                        <span class="lg-lb-view lg-hide-s"><span class="lg-btn lg-btn-ghost lg-btn-sm">View profile</span></span>
+                    }
+                </a>
+            }
+            <p class="lg-sub lg-lb-note">Average match score of custom draft games where the whole team has full stats. 1.00 = an average teammate. Needs @LeagueLeaderboardRules.MinScoredGames scored games.</p>
+        }
+    }
+</div>

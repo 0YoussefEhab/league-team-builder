@@ -1,0 +1,20 @@
+@* Step 12h1: tells league-result-image.js / league-export-day.js where to post a drawn picture. Rendered only when the League webhook
+   is set AND the member has LeagueExport > Send, so the "Send to Discord" buttons exist only for those who can use them.
+   Step 12h2: also puts #lri-auto on the page when the auto-send switches are on for something this page does, and the member can also
+   Render (the picture data comes from GET /LeagueExport/Render). league-auto-send.js reads it; no element = Finish never sends. *@
+@using LeagueTeamBuilder.Services
+@inject IPermissionChecker PermissionChecker
+@inject LeagueTeamBuilder.Services.LeagueDiscordSender LeagueDiscord
+@inject LeagueTeamBuilder.Services.LeagueAutoSendService LeagueAutoSend
+@if (LeagueDiscord.IsConfigured && await PermissionChecker.CanAccessAsync(User, "LeagueExport", "Send"))
+{
+    <div id="lri-send" data-url="@Url.Action("Send", "LeagueExport")" hidden></div>
+    if (await PermissionChecker.CanAccessAsync(User, "LeagueExport", "Render"))
+    {
+        var auto = await LeagueAutoSend.GetAsync();
+        if (auto.GameResult || auto.ClashProgress)
+        {
+            <div id="lri-auto" data-render="@Url.Action("Render", "LeagueExport")" data-game="@(auto.GameResult ? "1" : "0")" data-clash="@(auto.ClashProgress ? "1" : "0")" hidden></div>
+        }
+    }
+}

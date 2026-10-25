@@ -1,0 +1,53 @@
+@model LeagueClashEditPageModel
+@{
+    ViewData["Title"] = "Edit clash";
+    var f = Model.Form;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-clash.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/league-clash.js" asp-append-version="true"></script>
+}
+
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Edit <em>clash</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="ClashSchedule">&larr; Clash schedule</a></p>
+
+    <section class="lg-card">
+        <form method="post" asp-action="EditClash" data-lgc-form data-lgc-edit>
+            <input type="hidden" name="Id" value="@f.Id" />
+            <div class="lg-fieldgrid">
+                <div class="lg-field">
+                    <label class="lg-lbl" for="lgc-title">Title</label>
+                    <input id="lgc-title" name="Title" value="@f.Title" class="lg-input" maxlength="100" required />
+                    @if (Model.Errors.TryGetValue("Title", out var eTitle)) { <p class="lg-field-err" role="alert">@eTitle</p> }
+                </div>
+                <div class="lg-field">
+                    <label class="lg-lbl" for="lgc-when">Date and time <small class="lg-muted" data-lgc-tz>(UTC without JavaScript)</small></label>
+                    <input id="lgc-when" name="StartsAtLocal" type="datetime-local" value="@f.StartsAtLocal" class="lg-input" required data-lgc-local />
+                    <input type="hidden" name="StartsAtUtc" value="" data-lgc-utc data-lgc-iso="@f.StartsAtUtc" />
+                    <p class="lg-muted">A new date sends the members a notification again.</p>
+                    @if (Model.Errors.TryGetValue("StartsAt", out var eWhen)) { <p class="lg-field-err" role="alert">@eWhen</p> }
+                </div>
+                <div class="lg-field">
+                    <label class="lg-lbl" for="lgc-mode">Mode</label>
+                    <select id="lgc-mode" name="Mode" class="lg-select">
+                        <option value="@((int)LeagueMode.Normal)" selected="@(f.Mode == LeagueMode.Normal)">Normal Draft (lanes and rank)</option>
+                        <option value="@((int)LeagueMode.Aram)" selected="@(f.Mode == LeagueMode.Aram)">ARAM (5 strongest, rank only)</option>
+                    </select>
+                    @if (Model.Errors.TryGetValue("Mode", out var eMode)) { <p class="lg-field-err" role="alert">@eMode</p> }
+                </div>
+            </div>
+            <button class="lg-btn" type="submit">Save</button>
+            <a class="lg-btn lg-btn-ghost" asp-action="ClashSchedule">Cancel</a>
+        </form>
+    </section>
+</div>

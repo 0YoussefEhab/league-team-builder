@@ -1,0 +1,93 @@
+@using LeagueTeamBuilder.Services
+@model List<ChampionCatalogService.ChampionRow>
+@{
+    ViewData["Title"] = "League champions";
+    var query = ViewData["Query"] as string;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R5). Same data, same forms and field names, same wording; only the page shell and classes changed. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Champion <em>catalog</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"champions"' />
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <p class="lg-sub">Members pick champions from this list only. Disable a champion to hide it from the pickers (for example when the game pulls it); enable it again any time. A champion that is picked on a profile or was used in any match, past ones included, can only be disabled, never deleted: it shows as "retired" on existing profiles and stays on old matches.</p>
+
+    <div class="lg-grid2">
+        <form method="post" asp-action="AddChampion" class="lg-card">
+            <h2 class="lg-h2">Add one</h2>
+            <label class="lg-lbl" for="newName">Champion name</label>
+            <input id="newName" name="name" class="lg-input" maxlength="60" required />
+            <button class="lg-btn" type="submit">Add</button>
+        </form>
+        <form method="post" asp-action="BulkAddChampions" class="lg-card">
+            <h2 class="lg-h2">Bulk add</h2>
+            <label class="lg-lbl" for="bulkNames">One name per line</label>
+            <textarea id="bulkNames" name="names" class="lg-input" rows="4"></textarea>
+            <button class="lg-btn" type="submit">Add all</button>
+        </form>
+    </div>
+
+    <form method="get" class="lg-search" role="search">
+        <label class="lg-lbl" for="q">Search</label>
+        <input id="q" name="q" value="@query" class="lg-input" placeholder="Filter by name" />
+        <button class="lg-btn lg-btn-ghost" type="submit">Search</button>
+    </form>
+
+    <p class="lg-sub">@Model.Count champion(s)@(string.IsNullOrWhiteSpace(query) ? "" : " matching your search").</p>
+
+    <div class="lg-card lg-table-card">
+    <div class="lg-table-wrap">
+        <table class="lg-table">
+            <thead>
+                <tr><th scope="col">Name</th><th scope="col">Status</th><th scope="col">Used</th><th scope="col">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    var c = row.Champion;
+                    <tr>
+                        <td>
+                            <form method="post" asp-action="RenameChampion" class="lg-inline">
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <input name="name" value="@c.Name" class="lg-input" maxlength="60" aria-label="Name of @c.Name" />
+                                <button class="lg-btn lg-btn-ghost" type="submit">Rename</button>
+                            </form>
+                        </td>
+                        <td><span class="lg-status@(c.IsActive ? " is-on" : "")">@(c.IsActive ? "Active" : "Disabled")</span></td>
+                        <td>@row.UsageCount@(row.MatchCount > 0 ? $" ({row.MatchCount} in matches)" : "")</td>
+                        <td class="lg-actions">
+                            <form method="post" asp-action="SetChampionActive" class="lg-inline">
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <input type="hidden" name="active" value="@(c.IsActive ? "false" : "true")" />
+                                <button class="lg-btn lg-btn-ghost" type="submit">@(c.IsActive ? "Disable" : "Enable")</button>
+                            </form>
+                            <form method="post" asp-action="RemoveChampion" class="lg-inline"
+                                  onsubmit="return confirm('@(row.UsageCount > 0 ? $"This champion is used {row.UsageCount} time(s) on profiles or in matches, so it will be disabled instead of deleted. Continue?" : "Delete this champion permanently?")');">
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <button class="lg-btn lg-btn-danger" type="submit">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    </div>
+</div>

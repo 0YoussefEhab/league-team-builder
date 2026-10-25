@@ -1,0 +1,185 @@
+@using LeagueTeamBuilder.Services
+@model LeagueOverviewModel
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "League";
+    var stats = Model.Stats;
+    // Step 8d: the button shows only for a group that may open the Leaderboard (League > Leaderboard).
+    var canLeaderboard = await PermissionChecker.CanAccessAsync(User, "League", "Leaderboard");
+    // Step 8e: cards, tiles and names link to the player page only for a group that may open League > Player.
+    var canPlayer = await PermissionChecker.CanAccessAsync(User, "League", "Player");
+    string? PlayerUrl(int? id) => canPlayer && id != null ? Url.Action("Player", "League", new { id }) : null;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/league-overview.css" asp-append-version="true" />
+}
+
+@* Step 8c: the Overview, built from docs/league-overview-mockup.html. Data: LeagueOverviewService (8b).
+   Step 8e: the cards, tiles and the two names are links to the player page (an <a> with no href when the viewer may not
+   open League > Player, so it stays plain). Badges (#1 rank, MVP king) come in 8g.
+   A picture shows when the profile has one, else the coloured initial (the --h hue comes from the profile id). *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">League <em>team builder</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"home"' />
+
+    <div class="lg-grid">
+        <section class="lg-card lg-c12" aria-labelledby="lg-ov-top">
+            <div class="lg-th"><div>
+                <h2 class="lg-h2" id="lg-ov-top">Top ranked players</h2>
+                <p class="lg-sub lg-flush">Highest current rank in the server, users and guests together.</p>
+            </div></div>
+            @if (Model.TopRanked.Count == 0)
+            {
+                <p class="lg-empty">No players yet. Set up your league profile and you will show up here.</p>
+            }
+            else
+            {
+                <div class="lg-pod-grid @(Model.TopRanked.Count < 3 ? "is-few" : "")">
+                    @for (var i = 0; i < Model.TopRanked.Count; i++)
+                    {
+                        var p = Model.TopRanked[i];
+                        <a class="lg-pod lg-p@(i + 1)" style="--h:@LeagueViewText.Hue(p.Id)" href="@PlayerUrl(p.Id)">
+                            <span class="lg-pic" aria-hidden="true">@LeagueViewText.Initial(p.Name)@if (!string.IsNullOrEmpty(p.AvatarUrl)){<img class="lg-pimg" src="@p.AvatarUrl" alt="" loading="lazy" />}</span>
+                            <span class="lg-place"><span class="lg-sr">Place </span>@p.Position</span>
+                            @if (p.RankKing || p.MvpKing || p.ClashKing)
+                            {
+                                <span><partial name="_LeagueBadges" model="new LeagueBadgeModel(p.RankKing, p.MvpKing, false, p.ClashKing)" /></span>
+                            }
+                            @if (p.IsGuest)
+                            {
+                                <span><span class="lg-bd lg-bd-guest">Guest</span></span>
+                            }
+                            <h3>@p.Name</h3>
+                            <span class="lg-rkline"><img class="lg-rk" src="~/img/ranks/@LeagueViewText.RankImage(p.CurTier)" alt="" height="36" /> @LeagueViewText.RankText(p.CurTier, p.CurDiv)</span>
+                        </a>
+                    }
+                </div>
+                @if (canLeaderboard)
+                {
+                    <div class="lg-pod-foot"><a class="lg-btn" asp-controller="League" asp-action="Leaderboard">See the full leaderboard &rarr;</a></div>
+                }
+            }
+        </section>
+
+        <section class="lg-card lg-c12" aria-labelledby="lg-ov-mvp">
+            <div class="lg-th"><div>
+                <h2 class="lg-h2" id="lg-ov-mvp">Top 3 MVPs</h2>
+                <p class="lg-sub lg-flush">Most MVP awards in custom matches.</p>
+            </div></div>
+            @if (Model.TopMvps.Count == 0)
+            {
+                <p class="lg-empty">No MVPs yet. An MVP is set when the stats of a custom match are filled in.</p>
+            }
+            else
+            {
+                <div class="lg-mvp-grid @(Model.TopMvps.Count < 3 ? "is-few" : "")">
+                    @foreach (var p in Model.TopMvps)
+                    {
+                        <a class="lg-pod lg-pm" style="--h:@LeagueViewText.Hue(p.Id)" href="@PlayerUrl(p.Id)">
+                            <span class="lg-pic" aria-hidden="true">@LeagueViewText.Initial(p.Name)@if (!string.IsNullOrEmpty(p.AvatarUrl)){<img class="lg-pimg" src="@p.AvatarUrl" alt="" loading="lazy" />}</span>
+                            <span class="lg-rank-n">#@p.Position</span>
+                            <span class="lg-place">@p.MvpCount<small>@(p.MvpCount == 1 ? "MVP" : "MVPs")</small></span>
+                            @if (p.MvpKing || p.ClashKing)
+                            {
+                                <span><partial name="_LeagueBadges" model="new LeagueBadgeModel(false, p.MvpKing, false, p.ClashKing)" /></span>
+                            }
+                            @if (p.IsGuest)
+                            {
+                                <span><span class="lg-bd lg-bd-guest">Guest</span></span>
+                            }
+                            <h3>@p.Name</h3>
+                            <span class="lg-rkline"><img class="lg-rk lg-rk-s" src="~/img/ranks/@LeagueViewText.RankImage(p.CurTier)" alt="" height="22" /> @LeagueViewText.RankText(p.CurTier, p.CurDiv)</span>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="lg-card lg-c12 lg-cteam-wrap" aria-labelledby="lg-ov-clash">
+            <div class="lg-th">
+                <div>
+                    <h2 class="lg-h2" id="lg-ov-clash">Our best Clash team</h2>
+                    @if (Model.BestClash != null)
+                    {
+                        <p class="lg-sub lg-flush">@Model.BestClash.Title &middot; @LeagueViewText.ShortDate(Model.BestClash.StartsAtUtc)</p>
+                    }
+                </div>
+                @if (Model.BestClash != null)
+                {
+                    <span class="lg-won">&#127942; Won @LeagueViewText.Plural(Model.BestClash.Wins, "game")</span>
+                }
+            </div>
+            @if (Model.BestClash == null)
+            {
+                <p class="lg-empty">No Clash won yet. The team shows here after we win 3 games of a Clash and the Clash is ended.</p>
+            }
+            else
+            {
+                <div class="lg-cteam">
+                    @foreach (var m in Model.BestClash.Players)
+                    {
+                        <a class="lg-ct" style="--h:@LeagueViewText.Hue(m.ProfileId ?? 0)" href="@PlayerUrl(m.ProfileId)">
+                            @if (!string.IsNullOrEmpty(m.AvatarUrl))
+                            {
+                                <img class="lg-pimg" src="@m.AvatarUrl" alt="" loading="lazy" />
+                            }
+                            <span class="lg-big" aria-hidden="true">@LeagueViewText.Initial(m.Name)</span>
+                            @if (m.Lane != null)
+                            {
+                                <span class="lg-lane-l">@LeagueViewText.LaneName(m.Lane.Value)</span>
+                            }
+                            <span class="lg-nm">@m.Name</span>
+                            @if (m.Tier != null)
+                            {
+                                <span class="lg-rkrow"><img class="lg-rk lg-rk-s" src="~/img/ranks/@LeagueViewText.RankImage(m.Tier.Value)" alt="" height="22" /> @LeagueViewText.RankText(m.Tier.Value, m.Div)</span>
+                            }
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="lg-card lg-c12" aria-labelledby="lg-ov-stats">
+            <div class="lg-th"><h2 class="lg-h2" id="lg-ov-stats">Server stats</h2></div>
+            <div class="lg-sect-label lg-first">Games played</div>
+            <div class="lg-stats">
+                <div class="lg-stat"><span class="lg-v lg-acc">@stats.Customs</span><span class="lg-l">Custom games</span><span class="lg-s">draft + ARAM + arena</span></div>
+                <div class="lg-stat"><span class="lg-v">@stats.Draft</span><span class="lg-l">Custom draft</span><span class="lg-s">normal 5v5</span></div>
+                <div class="lg-stat"><span class="lg-v">@stats.Aram</span><span class="lg-l">Custom ARAM</span></div>
+                <div class="lg-stat"><span class="lg-v">@stats.Arena</span><span class="lg-l">Custom arena</span></div>
+                <div class="lg-stat"><span class="lg-v lg-acc">@stats.Clashes</span><span class="lg-l">Clashes played</span><span class="lg-s">events</span></div>
+                <div class="lg-stat"><span class="lg-v">@stats.ClashGames</span><span class="lg-l">Clash games</span><span class="lg-s">@stats.ClashesWon of @stats.Clashes @(stats.Clashes == 1 ? "clash" : "clashes") won</span></div>
+            </div>
+            <div class="lg-sect-label">Fun facts</div>
+            <div class="lg-stats">
+                <div class="lg-stat"><span class="lg-v">@stats.Players</span><span class="lg-l">Players</span><span class="lg-s">@stats.Members @(stats.Members == 1 ? "member" : "members") &middot; @stats.Guests @(stats.Guests == 1 ? "guest" : "guests")</span></div>
+                @if (stats.TopChampion != null)
+                {
+                    <div class="lg-stat"><span class="lg-v lg-txt">@stats.TopChampion</span><span class="lg-l">Most played champion</span><span class="lg-s">@LeagueViewText.Plural(stats.TopChampionGames, "game")</span></div>
+                }
+                @if (stats.TopLane != null)
+                {
+                    <div class="lg-stat"><span class="lg-v lg-txt">@LeagueViewText.LaneName(stats.TopLane.Value)</span><span class="lg-l">Most picked lane</span><span class="lg-s">@stats.TopLanePercent% of picks</span></div>
+                }
+                @if (stats.Streak != null)
+                {
+                    <div class="lg-stat"><span class="lg-v lg-txt"><a class="lg-plink" href="@PlayerUrl(stats.Streak.ProfileId)">@stats.Streak.Name</a></span><span class="lg-l">Longest win streak</span><span class="lg-s">@LeagueViewText.Plural(stats.Streak.Count, "game") in a row</span></div>
+                }
+                @if (stats.MostActive != null)
+                {
+                    <div class="lg-stat"><span class="lg-v lg-txt"><a class="lg-plink" href="@PlayerUrl(stats.MostActive.ProfileId)">@stats.MostActive.Name</a></span><span class="lg-l">Most active player</span><span class="lg-s">@LeagueViewText.Plural(stats.MostActive.Count, "game")</span></div>
+                }
+                @if (stats.AverageLengthText != null)
+                {
+                    <div class="lg-stat"><span class="lg-v lg-txt">@stats.AverageLengthText</span><span class="lg-l">Average game length</span></div>
+                }
+            </div>
+        </section>
+    </div>
+</div>

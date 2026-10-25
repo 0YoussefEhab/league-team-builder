@@ -1,0 +1,74 @@
+@using LeagueTeamBuilder.Services
+@inject IPermissionChecker PermissionChecker
+@{
+    ViewData["Title"] = "League settings";
+    var canModes = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Modes");
+    var canTiers = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Tiers");
+    var canGuests = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Guests");
+    var canChampions = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Champions");
+    var canClash = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "ClashSchedule");
+    var canAutoSend = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "AutoSend");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* New design (PLAN-league-restyle.md, Step R5). Same data, same forms and field names, same wording; only the page shell and classes changed. *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">League <em>settings</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-sub">You only see the tiles you have permission for.</p>
+    <div class="lg-tiles">
+        @if (canModes)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Modes">
+                <strong>Modes and map</strong>
+                <span>Players per mode, the map image for each mode and where each player sits on it.</span>
+            </a>
+        }
+        @if (canTiers)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Tiers">
+                <strong>Custom tiers</strong>
+                <span>Your own ranking, used by balancing mode 4, and who is in which tier.</span>
+            </a>
+        }
+        @if (canGuests)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Guests">
+                <strong>Guests</strong>
+                <span>Players without an HFECloud account: add, edit or delete them.</span>
+            </a>
+        }
+        @if (canClash)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="ClashSchedule">
+                <strong>Clash schedule</strong>
+                <span>Schedule a clash, notify the members and see who can join.</span>
+            </a>
+        }
+        @if (canAutoSend)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="AutoSend">
+                <strong>Discord auto-send</strong>
+                <span>Post the result picture to the League channel by itself when a game is finished.</span>
+            </a>
+        }
+        @if (canChampions)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Champions">
+                <strong>Champions</strong>
+                <span>Manage the champion catalog members pick from.</span>
+            </a>
+        }
+    </div>
+    @if (!canModes && !canTiers && !canGuests && !canChampions && !canClash && !canAutoSend)
+    {
+        <p class="lg-sub">Nothing else has been granted to your group yet.</p>
+    }
+</div>

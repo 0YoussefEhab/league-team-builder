@@ -1,0 +1,28 @@
+@model LeagueRankSelectModel
+@*
+    Rank + division picker (docs/LEAGUE_BUILD_SPEC.md section 5). Renders plain <select>s, so the form
+    works without JavaScript; wwwroot/js/league-profile.js hides the tier select and shows a button +
+    listbox with the badge image beside each rank. Binding is unchanged (value = LeagueRank number).
+    Division is disabled for Master and above (server also ignores it there).
+*@
+@{
+    var id = "lg-" + Model.TierName.ToLowerInvariant();
+}
+<div class="lg-rank" data-lg-rank>
+    <span class="lg-lbl" id="@(id)-lbl">@Model.Label</span>
+    <div class="lg-rank-row">
+        <select id="@id" name="@Model.TierName" class="lg-select" data-lg-rank-select aria-labelledby="@(id)-lbl">
+            @foreach (var r in Enum.GetValues<LeagueRank>())
+            {
+                <option value="@((int)r)" data-img="@Url.Content("~/img/ranks/" + r.ToString().ToLowerInvariant() + ".png")" selected="@(r == Model.Tier)">@r</option>
+            }
+        </select>
+        <select name="@Model.DivName" class="lg-select lg-div" data-lg-div aria-label="@Model.Label division">
+            <option value="">-</option>
+            @for (var d = 1; d <= 4; d++)
+            {
+                <option value="@d" selected="@(Model.Div == d)">@d</option>
+            }
+        </select>
+    </div>
+</div>
