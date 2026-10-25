@@ -11,13 +11,14 @@
   <!--
     Only what the League code needs (checked by grep in step A1): EF Core, Identity, SkiaSharp.
     Not used by the League code, so left out: AWS S3, MailKit, ClosedXML, QRCoder, Google sign-in, SkiaSharp.HarfBuzz.
-    Versions pinned on 2026-10-25 from the first successful restore (EF Core and Identity 10.0.14, Npgsql provider 10.0.3).
+    Versions pinned on 2026-10-25 from the first successful restore (EF Core and Identity 10.0.14). SQLite only since A3: the Npgsql provider was removed.
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <!-- Keeps the sign-in cookie keys in the database (Program.cs). Same release train as Identity, so 10.0.14 is expected to exist; restore will tell. -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

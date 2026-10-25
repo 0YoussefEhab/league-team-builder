@@ -1,0 +1,57 @@
+@* /Admin/Users. Plain markup on purpose: it gets its look in step C5. It works with no _ViewImports, so it does not depend on A4. *@
+@model LeagueTeamBuilder.Models.AdminUsersPageModel
+@{
+    ViewData["Title"] = "Users";
+}
+<h1>Users</h1>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <p role="status"><b>@Model.Message</b></p>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p role="alert"><b>@Model.Error</b></p>
+}
+
+<p>Everyone who registers is a Member. Officers run games and the roster; Admins also manage accounts. A deactivated account cannot sign in; nothing it did is deleted.</p>
+
+<table>
+    <thead>
+        <tr><th>Account</th><th>Name</th><th>Role</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+    @foreach (var u in Model.Users)
+    {
+        <tr>
+            <td>@u.Email @if (u.IsYou) { <text>(you)</text> }</td>
+            <td>@u.DisplayName</td>
+            <td>
+                <form method="post" action="@Url.Action("SetRole", "AdminUsers")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@u.Id" />
+                    <select name="role" aria-label="Role of @u.Email">
+                        @foreach (var r in Model.Roles)
+                        {
+                            <option value="@r" selected="@(r == u.Role)">@r</option>
+                        }
+                    </select>
+                    <button type="submit">Save role</button>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="@Url.Action("SetActive", "AdminUsers")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@u.Id" />
+                    <input type="hidden" name="active" value="@(u.IsDeactivated ? "true" : "false")" />
+                    @(u.IsDeactivated ? "Deactivated" : "Active")
+                    @if (!u.IsYou)
+                    {
+                        <button type="submit">@(u.IsDeactivated ? "Reactivate" : "Deactivate")</button>
+                    }
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
