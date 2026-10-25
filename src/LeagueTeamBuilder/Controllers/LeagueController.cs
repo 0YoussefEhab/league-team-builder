@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LeagueTeamBuilder.Controllers
 {
     // League Team Builder, member-facing side (docs/LEAGUE_BUILD_SPEC.md). Ordinary controller so it
-    // is gated by the GroupPermissions matrix through DynamicPermissionFilter like every other
+    // is gated by the role table (RolePermissions) through RolePermissionFilter like every other
     // feature. League controllers are denied for ALL groups until the owner grants them (see
     // LeaguePermissions). Nothing here links to or edits the main profile; the only contact with it
     // is READING DisplayName/AvatarUrl once when the member presses "Copy name and picture".

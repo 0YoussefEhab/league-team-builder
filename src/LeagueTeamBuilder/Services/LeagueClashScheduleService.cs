@@ -13,10 +13,10 @@ namespace LeagueTeamBuilder.Services
         public const string RespondAction = "Respond";
 
         private readonly ApplicationDbContext _db;
-        private readonly NotificationService _notifications;
+        private readonly ILeagueNotifier _notifications;
         private readonly ILogger<LeagueClashScheduleService> _logger;
 
-        public LeagueClashScheduleService(ApplicationDbContext db, NotificationService notifications, ILogger<LeagueClashScheduleService> logger)
+        public LeagueClashScheduleService(ApplicationDbContext db, ILeagueNotifier notifications, ILogger<LeagueClashScheduleService> logger)
         {
             _db = db;
             _notifications = notifications;
@@ -311,18 +311,16 @@ namespace LeagueTeamBuilder.Services
 
         // ------------------------------------------------------------------ notifications
 
-        // Spec section 4 + owner decision: one personal notification per non-guest league profile whose group may open the
-        // response page (LeagueClash > Respond ticked), so nobody gets a link that ends on "no access". Guests never.
+        // Spec section 4 + owner decision: one personal notification per non-guest league profile whose role may open the
+        // response page (LeagueClash > Respond), so nobody gets a link that ends on "no access". Guests never. Deactivated accounts never.
         public async Task<List<string>> GetRecipientUserIdsAsync()
         {
-            var groupIds = _db.GroupPermissions
-                .Where(p => p.ControllerName == RespondController && p.ActionName == RespondAction && p.Allowed)
-                .Select(p => p.PermissionGroupId);
+            var allowed = _db.UserIdsAllowedTo(RespondController, RespondAction);
 
             return await (from lp in _db.LeagueProfiles
                           where !lp.IsGuest && lp.UserId != null
                           join u in _db.Users on lp.UserId equals u.Id
-                          where u.PermissionGroupId != null && groupIds.Contains(u.PermissionGroupId.Value)
+                          where !u.IsDeactivated && allowed.Contains(u.Id)
                           select u.Id).Distinct().ToListAsync();
         }
 

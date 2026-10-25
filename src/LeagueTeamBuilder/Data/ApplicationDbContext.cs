@@ -30,6 +30,10 @@ namespace LeagueTeamBuilder
         public DbSet<LeagueAutoSendSettings> LeagueAutoSendSettings => Set<LeagueAutoSendSettings>();
         public DbSet<LeagueGuestLinkLog> LeagueGuestLinkLogs => Set<LeagueGuestLinkLog>();
 
+        // Seams that replace HFECloud's NotificationService and AdminActivityLogger (step A4).
+        public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+        public DbSet<ActivityLogEntry> ActivityLogEntries => Set<ActivityLogEntry>();
+
         // Sign-in cookies stay valid across restarts and redeploys (keys live in the database, see Program.cs).
         public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
@@ -137,6 +141,24 @@ namespace LeagueTeamBuilder
                 // The snapshot columns stay when the profile goes; only the live link is cleared.
                 e.HasOne(p => p.Profile).WithMany().HasForeignKey(p => p.ProfileId).OnDelete(DeleteBehavior.SetNull);
                 e.HasOne(p => p.Champion).WithMany().HasForeignKey(p => p.ChampionId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------------------------------------------------------- notifications and audit trail
+            b.Entity<UserNotification>(e =>
+            {
+                e.Property(n => n.Message).HasMaxLength(UserNotification.MaxMessage);
+                e.Property(n => n.Link).HasMaxLength(UserNotification.MaxLink);
+                e.HasIndex(n => new { n.UserId, n.ReadUtc });
+                // Accounts are deactivated, never deleted; if one is ever removed its notifications go with it.
+                e.HasOne<ApplicationUser>().WithMany().HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            b.Entity<ActivityLogEntry>(e =>
+            {
+                e.Property(a => a.Action).HasMaxLength(ActivityLogEntry.MaxAction);
+                e.Property(a => a.Target).HasMaxLength(ActivityLogEntry.MaxTarget);
+                e.HasIndex(a => a.CreatedUtc);
+                // No foreign key on purpose: the trail must outlive the account that wrote it.
             });
 
             // LeagueGuestLinkLog has no foreign keys on purpose (the user or profile may be deleted later; the log must survive).

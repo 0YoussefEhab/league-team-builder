@@ -24,9 +24,9 @@ namespace LeagueTeamBuilder.Services
 
         private readonly ApplicationDbContext _db;
         private readonly IWebHostEnvironment _env;
-        private readonly AdminActivityLogger _audit;
+        private readonly IActivityLog _audit;
 
-        public LeagueProfileService(ApplicationDbContext db, IWebHostEnvironment env, AdminActivityLogger audit)
+        public LeagueProfileService(ApplicationDbContext db, IWebHostEnvironment env, IActivityLog audit)
         {
             _db = db;
             _env = env;

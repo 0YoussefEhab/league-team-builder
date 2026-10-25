@@ -1,0 +1,58 @@
+@using System.Security.Claims
+@inject ILeagueNotifier Notifier
+@*
+    TEMPORARY layout (step A4). Plain on purpose: it only has to give the League views what they expect, which is
+    RenderSection("Styles") and RenderSection("Scripts"). Step C1 replaces it with the real shell (brand mark, tabs,
+    look picker, self-hosted fonts). The Identity login and register pages use it too (Areas/Identity/Pages/_ViewStart.cshtml).
+*@
+@{
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var unread = 0;
+    if (signedIn)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrEmpty(userId)) unread = await Notifier.UnreadCountAsync(userId);
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] is string t && t.Length > 0 ? t + " - " : "")League Team Builder</title>
+    <link rel="stylesheet" href="~/css/temp-theme.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <header class="tmp-bar">
+        <a class="tmp-brand" href="/">League Team Builder</a>
+        @if (signedIn)
+        {
+            <a href="/League">League</a>
+            <a href="/Notifications">Notifications@(unread > 0 ? " (" + unread + ")" : "")</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a href="/Admin/Users">Users</a>
+            }
+        }
+        <span class="tmp-spacer"></span>
+        @if (signedIn)
+        {
+            <span>@(User.Identity?.Name)</span>
+            <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/">
+                <button type="submit">Sign out</button>
+            </form>
+        }
+        else
+        {
+            <a href="/Identity/Account/Login">Sign in</a>
+            <a href="/Identity/Account/Register">Register</a>
+        }
+    </header>
+    <main class="tmp-main">
+        @RenderBody()
+    </main>
+    <footer class="tmp-foot">Not endorsed by or affiliated with Riot Games.</footer>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

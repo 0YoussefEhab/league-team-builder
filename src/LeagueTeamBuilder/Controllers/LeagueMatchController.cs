@@ -32,7 +32,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit([FromBody] LeagueMatchSubmitRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.SubmitAsync(request, _userManager.GetUserId(User)));
         }
 
@@ -41,7 +41,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Start([FromBody] LeagueMatchIdRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.StartAsync(request.Id));
         }
 
@@ -50,7 +50,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Finish([FromBody] LeagueMatchFinishRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             // A "Played on" in the request needs LeagueMatch > EditDate as well (checked again in the service).
             var canEditDate = await _permissions.CanAccessAsync(User, "LeagueMatch", "EditDate");
             return Json(await _matches.FinishAsync(request, canEditDate));
@@ -61,7 +61,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditResult([FromBody] LeagueMatchFinishRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.EditResultAsync(request, _userManager.GetUserId(User)));
         }
 
@@ -71,7 +71,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditDate([FromBody] LeagueMatchDateRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.EditDateAsync(request, _userManager.GetUserId(User)));
         }
 
@@ -80,7 +80,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Stats([FromBody] LeagueMatchStatsRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.SaveStatsAsync(request, _userManager.GetUserId(User)));
         }
 
@@ -89,7 +89,7 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetMvp([FromBody] LeagueMatchMvpRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.SetMvpAsync(request, _userManager.GetUserId(User)));
         }
 
@@ -116,10 +116,10 @@ namespace LeagueTeamBuilder.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromBody] LeagueMatchIdRequest? request)
         {
-            if (request is null) return BadRequest(Empty());
+            if (request is null) return BadRequest(EmptyRequest());
             return Json(await _matches.DeleteAsync(request.Id));
         }
 
-        private static LeagueMatchResponse Empty() => new() { Ok = false, Error = "The request was empty." };
+        private static LeagueMatchResponse EmptyRequest() => new() { Ok = false, Error = "The request was empty." };
     }
 }

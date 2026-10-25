@@ -1,0 +1,30 @@
+/* TEMPORARY (step A4). Stands in for HFECloud's home-v2.css so the old League stylesheets show colours while we test behaviour
+   (steps A5 to A8). Step C1 replaces it with leaguehub-theme.css and the three looks. Delete this file then. */
+:root {
+  --hv-bg: #0d1017;
+  --hv-bg2: #12161f;
+  --hv-card: #161b26;
+  --hv-ink: #e8ecf4;
+  --hv-mut: #8b95a8;
+  --hv-line: #2a3142;
+  --hv-acc: #19d3ff;
+  --hv-fg: #e8ecf4;
+  --hv-glow: rgba(25, 211, 255, 0.18);
+  --hv-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --hv-disp: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* The old watermark is a mask: a fully transparent picture hides it. */
+  --hv-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'/%3E");
+}
+html { color-scheme: dark; }
+body { margin: 0; background: var(--hv-bg); color: var(--hv-ink); font-family: var(--hv-body); line-height: 1.45; }
+a { color: var(--hv-acc); }
+.tmp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 10px 18px; background: var(--hv-bg2); border-bottom: 1px solid var(--hv-line); }
+.tmp-bar a { text-decoration: none; }
+.tmp-bar .tmp-brand { font-weight: 700; color: var(--hv-ink); }
+.tmp-bar .tmp-spacer { flex: 1; }
+.tmp-bar form { display: inline; margin: 0; }
+.tmp-bar button { background: none; border: 0; color: var(--hv-acc); font: inherit; cursor: pointer; padding: 0; }
+.tmp-main { max-width: 1200px; margin: 0 auto; padding: 18px; }
+.tmp-main table { border-collapse: collapse; }
+.tmp-main th, .tmp-main td { border: 1px solid var(--hv-line); padding: 6px 10px; text-align: left; }
+.tmp-foot { max-width: 1200px; margin: 0 auto; padding: 18px; color: var(--hv-mut); font-size: 13px; }

@@ -94,12 +94,12 @@ namespace LeagueTeamBuilder.Services
     public class LeagueGuestLinkService
     {
         private readonly ApplicationDbContext _db;
-        private readonly NotificationService _notifications;
-        private readonly AdminActivityLogger _audit;
+        private readonly ILeagueNotifier _notifications;
+        private readonly IActivityLog _audit;
         private readonly ILogger<LeagueGuestLinkService> _logger;
 
-        public LeagueGuestLinkService(ApplicationDbContext db, NotificationService notifications,
-            AdminActivityLogger audit, ILogger<LeagueGuestLinkService> logger)
+        public LeagueGuestLinkService(ApplicationDbContext db, ILeagueNotifier notifications,
+            IActivityLog audit, ILogger<LeagueGuestLinkService> logger)
         {
             _db = db;
             _notifications = notifications;
@@ -107,14 +107,14 @@ namespace LeagueTeamBuilder.Services
             _logger = logger;
         }
 
-        // Users whose group has League > Index ticked (owner decision), with or without a league profile.
+        // Users whose role may open League > Index (every role, today), with or without a league profile.
         public async Task<List<LeagueLinkableUser>> GetLinkableUsersAsync(string? search, int take = LeagueGuestLinkRules.DefaultSearchRows)
         {
             take = LeagueGuestLinkRules.ClampTake(take);
-            var groupIds = GroupsWith("League", "Index");
+            var allowed = _db.UserIdsAllowedTo("League", "Index");
 
             var users = _db.Users.AsNoTracking()
-                .Where(u => !u.IsDeactivated && u.PermissionGroupId != null && groupIds.Contains(u.PermissionGroupId.Value));
+                .Where(u => !u.IsDeactivated && allowed.Contains(u.Id));
 
             var term = (search ?? string.Empty).Trim().ToLower();
             if (term.Length > 0)
@@ -138,7 +138,7 @@ namespace LeagueTeamBuilder.Services
         }
 
         // The confirm step (Step 7b). Null when the guest is gone or the user can no longer be linked
-        // (deactivated, or their group lost League > Index). Same eligibility as the list and as LinkAsync.
+        // (deactivated, or their role lost League > Index). Same eligibility as the list and as LinkAsync.
         public async Task<LeagueLinkPreview?> GetPreviewAsync(int guestId, string userId)
         {
             var guest = await _db.LeagueProfiles.AsNoTracking()
@@ -146,10 +146,9 @@ namespace LeagueTeamBuilder.Services
                 .Select(p => new { p.Id, p.InGameName }).FirstOrDefaultAsync();
             if (guest is null) return null;
 
-            var groupIds = GroupsWith("League", "Index");
+            var allowed = _db.UserIdsAllowedTo("League", "Index");
             var user = await _db.Users.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeactivated
-                    && u.PermissionGroupId != null && groupIds.Contains(u.PermissionGroupId.Value));
+                .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeactivated && allowed.Contains(u.Id));
             if (user is null) return null;
 
             var profile = await _db.LeagueProfiles.AsNoTracking()
@@ -182,8 +181,8 @@ namespace LeagueTeamBuilder.Services
 
             var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == req.UserId);
             if (user is null || user.IsDeactivated) return Fail("That user was not found.");
-            if (!await GroupAllowsAsync(user.PermissionGroupId, "League", "Index"))
-                return Fail("That user's group does not have League access, so they cannot be linked.");
+            if (!await UserAllowedAsync(user.Id, "League", "Index"))
+                return Fail("That user's role does not have League access, so they cannot be linked.");
 
             var existing = await _db.LeagueProfiles.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == user.Id);
             var plan = LeagueGuestLinkRules.Plan(existing is not null);
@@ -311,14 +310,14 @@ namespace LeagueTeamBuilder.Services
         }
 
         // One personal notification per Open clash this profile has not answered, same text and link as the scheduling
-        // notification. Only when the user's group may open the response page (Step 6 decision). The link is already
+        // notification. Only when the user's role may open the response page (Step 6 decision). The link is already
         // saved, so a problem here is logged and never undoes it.
         private async Task<int> NotifyOpenClashesAsync(ApplicationUser user, int profileId)
         {
             var sent = 0;
             try
             {
-                if (!await GroupAllowsAsync(user.PermissionGroupId, LeagueClashScheduleService.RespondController, LeagueClashScheduleService.RespondAction))
+                if (!await UserAllowedAsync(user.Id, LeagueClashScheduleService.RespondController, LeagueClashScheduleService.RespondAction))
                     return 0;
 
                 var answered = _db.LeagueClashResponses.Where(r => r.ProfileId == profileId).Select(r => r.EventId);
@@ -554,12 +553,9 @@ namespace LeagueTeamBuilder.Services
 
         private static LeagueUndoResult UndoFail(string message) => new() { Ok = false, Message = message };
 
-        private IQueryable<int> GroupsWith(string controller, string action) =>
-            _db.GroupPermissions.Where(p => p.ControllerName == controller && p.ActionName == action && p.Allowed)
-                .Select(p => p.PermissionGroupId);
-
-        private async Task<bool> GroupAllowsAsync(int? groupId, string controller, string action) =>
-            groupId is not null && await GroupsWith(controller, action).AnyAsync(id => id == groupId.Value);
+        // May this user's role open controller/action? (The role table, RolePermissions.)
+        private Task<bool> UserAllowedAsync(string userId, string controller, string action) =>
+            _db.UserIdsAllowedTo(controller, action).AnyAsync(id => id == userId);
 
         private static LeagueLinkResult Fail(string message) => new() { Ok = false, Message = message };
     }

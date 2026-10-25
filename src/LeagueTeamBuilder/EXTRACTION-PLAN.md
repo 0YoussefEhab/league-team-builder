@@ -112,9 +112,9 @@ Shared in all looks: the palette is **two-sided** (Side A and Side B, the two te
 - [x] **A1 Skeleton (built, run, pushed; see section 9).** New `LeagueTeamBuilder` solution, `LeagueTeamBuilder.csproj` on `net10.0`, trimmed packages, minimal `Program.cs`, `.gitignore`, MIT `LICENSE`, `global.json`, README stub. No League code yet. *You run:* `dotnet restore`, `dotnet build`, `dotnet run`.
 - [x] **A2 Copy League code (applied and verified; see section 9).** Copy the files in section 1 (119 files) and rename namespace `HFECloud` to `LeagueTeamBuilder` by script, and report leftover HFECloud wording. Do **not** copy: `PLAN-*.md`, uploads, avatars, `HFECloud.db`, `wwwroot/img/ranks`, `league-export/bg-*.jpg`. The project does **not** build after this step (expected).
 - [ ] **A3 Data and identity (written 2026-10-26, not built; see section 9).** Slim `ApplicationDbContext` (Identity + 15 League tables + data-protection keys), `ApplicationUser` (with `IsDeactivated` and the nullable `Look`), Identity default UI, three roles (new accounts are Members), admin seed from config, SQLite only, `/Admin/Users` role editing and deactivation.
-- [ ] **A4 Seams.** `RolePermissionChecker` + filter, rewrite the 6 `GroupPermissions` / `PermissionGroupId` spots (section 2), register all League services in `Program.cs` (the list has to be built from the copied classes; HFECloud's `Program.cs` is not in hand), `ILeagueNotifier`, `IActivityLog`, local `FileUploadService`, `MediaUploadLimits`, Discord URL helper, copied small models, a temporary plain `_Layout` with `Styles` and `Scripts` sections.
+- [ ] **A4 Seams (written 2026-10-26, not built; see section 9).** `RolePermissionChecker` + filter, rewrite the 6 `GroupPermissions` / `PermissionGroupId` spots (section 2), register all League services in `Program.cs` (the list has to be built from the copied classes; HFECloud's `Program.cs` is not in hand), `ILeagueNotifier`, `IActivityLog`, local `FileUploadService`, `MediaUploadLimits`, Discord URL helper, copied small models, a temporary plain `_Layout` with `Styles` and `Scripts` sections.
 - [ ] **A5 First build.** *You run:* `dotnet restore && dotnet build`, paste the errors, I fix in rounds until it is clean. This is also the first compile of the HFECloud restyle R1 to R6.
-- [ ] **A6 Migration.** *You run:* `dotnet tool install --global dotnet-ef` (version 10), then `dotnet ef migrations add InitialCreate`; check it creates only the Identity tables, the 15 League tables and `DataProtectionKeys`.
+- [ ] **A6 Migration.** *You run:* `dotnet tool install --global dotnet-ef` (version 10), then `dotnet ef migrations add InitialCreate`; check it creates only the Identity tables, the 15 League tables, `DataProtectionKeys`, and the two tables A4 added (`UserNotifications`, `ActivityLogEntries`).
 - [ ] **A7 Tests.** Copy `HFECloud.Tests`, change namespace, *you run* `dotnet test`.
 - [ ] **A8 Click-through.** Every League page once, features only, so behaviour bugs are found **before** the theme changes and are not confused with styling bugs.
 - [ ] **A9 Wording pass.** Remove or make configurable the HFECloud / HFE wording the click-through shows (list in section 9, A2). Decisions first, see A2 notes: result-image footer and subtitle, "HFECloud account/profile" texts, Discord bot username, and the `HFE-STATS` paste format name.
@@ -169,7 +169,7 @@ Check Riot's current policy for community projects yourself; this is not legal a
 ## 7. Known rough edges
 
 - Copied code has HFECloud wording in comments; the Discord username and result-image text say "HFE League" (make configurable or rename).
-- Pages only reachable from the HFECloud sidebar (Notifications, Profile) have no equivalent; the League tabs are the navigation.
+- Pages only reachable from the HFECloud sidebar had no equivalent. A4 adds a plain `/Notifications` page; the League tabs are the navigation for the rest.
 - Uploads are served from `/uploads/...` at the site root; a path base (`/league`) would need `Url.Content`.
 
 ## 8. Desktop edition: assessment
@@ -286,6 +286,8 @@ Real costs to accept:
 
 **First build (owner, 2026-10-26):** restore clean; the `ApplicationUser` errors are gone. 30 `ApplicationDbContext` errors remained because the context was in `LeagueTeamBuilder.Data`; moved to the root namespace `LeagueTeamBuilder` (as in HFECloud). `Program.cs` got `using LeagueTeamBuilder;`. For A4: `IPermissionChecker`, `NotificationService` and `AdminActivityLogger` are used the same way (no `using` for them in the League files), so they go in the root namespace too.
 
+**Builds (owner):** first build 107 errors; second, after the `ApplicationDbContext` namespace fix, 77. None of the 77 point at an A3 file; they are exactly the seams A4 provides. A3 is committed and pushed (`bb9f867 \"A3: database, identity, roles, admin users\"`, 14 files, on top of the A2 push `af99de4`). **A3 is ticked only after A6**, because login, roles and the admin seed cannot run until A4 and the migration exist. New warning found: `LeagueMatchController.Empty()` hid `ControllerBase.Empty` (new in .NET 10); fixed in A4 by renaming it.
+
 **New find (section 2, row added):** the League code reads the old group table in 6 places. A4 rewrites them.
 
 **You run, after copying the files in (one new folder: `Views/AdminUsers`)**
@@ -302,3 +304,35 @@ Real costs to accept:
 - The `Seed:*` keys are not in `appsettings.json` at all, so no secret and no empty placeholder is in the repo. Set them with `dotnet user-secrets set "Seed:AdminEmail" "you@example.com"` and `dotnet user-secrets set "Seed:AdminPassword" "..."` from the project folder.
 
 **The question that was asked (kept for the record):** one EF migration set cannot serve SQLite and Postgres; HFECloud used `EnsureCreated` for SQLite (no upgrades) and migrations for Postgres only. Options were SQLite only, two migration sets, or Postgres for web and SQLite for desktop. Chosen: SQLite only.
+
+### A4 Seams (2026-10-26): WRITTEN, NOT BUILT
+
+**Done (written in the authoring environment, from the owner's current project zip; nothing compiled)**
+- **Role table** (`Services/RolePermissions.cs`): one line per League action with the lowest role that may use it; a higher role may do everything a lower one may. `RolePermissionChecker` answers `IPermissionChecker` for the views (same `CanAccessAsync(User, controller, action)`, so no view or controller changed). `RolePermissionFilter` is a global filter that enforces the same table on every League controller: not signed in goes to login, a normal page gets the access-denied page, a script call (Accept or body is JSON) gets a plain 403. **Fail closed:** an action that is not in the table is denied for everybody, Admin included, and a start-up check logs a warning for every League action missing from it.
+- **The 6 `GroupPermissions` / `PermissionGroupId` spots rewritten** (5 in `LeagueGuestLinkService`, 1 in `LeagueClashScheduleService`) to ask the role table: `UserIdsAllowedTo(controller, action)` returns the ids of users whose role may use the action. `LeagueClashScheduleService.GetRecipientUserIdsAsync` now also skips deactivated accounts (the old query did not; an account that cannot sign in should not get a notification).
+- **`ILeagueNotifier` + `UserNotifications` table** (replaces `NotificationService`; same `CreateForUserAsync(userId, message, link)`), and a plain `/Notifications` page (your own list, newest first, "Mark all as read"). Not in the plan: without a page the notifications would be written and never seen.
+- **`IActivityLog` + `ActivityLogEntries` table** (replaces `AdminActivityLogger`). `Log` only adds the line; the caller's next `SaveChangesAsync` writes it. All 6 call sites already save right after, in the same transaction. There is **no page that shows the trail yet**.
+- **Local-disk `FileUploadService`** (same method names as HFECloud's: `ValidatePublicFile`, `SaveValidatedAsync`, `SaveAsync`, `DeleteIfExists`, `DeleteReplacedUpload`), trimmed `MediaUploadLimits`, and `DiscordWebhook.IsValidUrl` (replaces `DiscordNotifier.IsValidWebhookUrl`, one line changed in `LeagueDiscordSender`). Files get a random name; deletes only touch `wwwroot/uploads/...` and refuse paths that climb out.
+- **`Views/_ViewImports.cshtml`** (`@using LeagueTeamBuilder`, `.Models`, `.Services`, MVC tag helpers) and `_ViewStart.cshtml`: this should clear the ~30 view-model errors. **Temporary `_Layout`** with the `Styles` and `Scripts` sections, a plain top bar, and `wwwroot/css/temp-theme.css`, which defines the `--hv-*` tokens so the old stylesheets show colours until C1 (delete both then). `Areas/Identity/Pages/_ViewStart.cshtml` points the Identity login and register pages at that layout.
+- **`Program.cs`:** filter, the three seams, 15 League services (scoped; `TeamBalancer` and `ClashTeamBuilder` scoped too, because I could not confirm they hold no state), `AddHttpClient<LeagueDiscordSender>()`, the start-up check.
+- **`LeagueMatchController.Empty()` renamed `EmptyRequest()`** (9 places), which removes the .NET 10 warning.
+
+**Not done / could not be run**
+- Nothing compiled or run (no .NET SDK here). Things I could not confirm without a compiler: the exact shape of HFECloud's `FileUploadService` (written from how the League code calls it; the middle value of the `SaveValidatedAsync` result is unused there), that the Identity UI package really looks for its layout through `Areas/Identity/Pages/_ViewStart.cshtml` (A8 will show: the login page renders with the top bar or it does not), and that EF translates the role subquery (it is the same shape as the old group subquery).
+- `HFECloud.Tests` is not here, so nothing constructs these services yet; A7 will need `ILeagueNotifier` and `IActivityLog` fakes.
+- Uploads still go to `wwwroot/uploads/...` (the League code passes `WebRootPath`). Section 8 rule 2 (paths from config) is left for Phase E.
+- No admin screen for the activity trail, and no e-mail or Discord for notifications.
+
+**Role defaults I chose (owner decision needed, one table to change)**
+- **Member:** League overview, leaderboard, player pages, history, match detail, own profile; Clash page, respond to a clash.
+- **Officer** (everything Member has, plus): team builder, save/start/finish/edit/delete matches, set MVP, import stats, run the Clash board, export and send result pictures, guests (add, edit, delete, names, link), player rank and names, player tier, schedule/edit/cancel a clash.
+- **Admin** (everything above, plus): champion catalog, modes and maps, tier list, Discord auto-send, the guest link log, unlink and undo guest links, "Recompute MVPs".
+
+**You run (after extracting `LeagueTeamBuilder-A4.zip` into the repo root so `src\` merges)**
+1. Add `wwwroot/uploads/` to `.gitignore` (uploaded pictures must not be committed).
+2. `dotnet build`. Expect the `IPermissionChecker`, `NotificationService`, `AdminActivityLogger` and view-model errors to be gone. Paste whatever is left; that is A5.
+3. Do not run the app yet (no migration until A6).
+
+**Changed / new files** (send-only-the-edited-files zip)
+New: `Services/RolePermissions.cs`, `Services/RolePermissionFilter.cs`, `Services/LeagueNotifier.cs`, `Services/ActivityLog.cs`, `Services/FileUploadService.cs`, `Services/MediaUploadLimits.cs`, `Services/DiscordWebhook.cs`, `Models/UserNotification.cs`, `Controllers/NotificationsController.cs`, `Views/Notifications/Index.cshtml`, `Views/_ViewImports.cshtml`, `Views/_ViewStart.cshtml`, `Views/Shared/_Layout.cshtml`, `Areas/Identity/Pages/_ViewStart.cshtml`, `wwwroot/css/temp-theme.css`.
+Changed: `Program.cs`, `Data/ApplicationDbContext.cs` (two tables), `Services/LeagueGuestLinkService.cs`, `Services/LeagueClashScheduleService.cs`, `Services/LeagueProfileService.cs`, `Services/LeagueDiscordSender.cs`, `Services/LeaguePermissions.cs` (comment), `Controllers/LeagueMatchController.cs`, `Controllers/LeagueController.cs` (comment), this plan file.

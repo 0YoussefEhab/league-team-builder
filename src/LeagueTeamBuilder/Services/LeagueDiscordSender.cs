@@ -18,7 +18,7 @@ namespace LeagueTeamBuilder.Services
             _http = http;
             _logger = logger;
             var url = config["Discord:LeagueWebhookUrl"];
-            _webhookUrl = DiscordNotifier.IsValidWebhookUrl(url) ? url!.Trim() : null;
+            _webhookUrl = DiscordWebhook.IsValidUrl(url) ? url!.Trim() : null;
         }
 
         public bool IsConfigured => _webhookUrl != null;

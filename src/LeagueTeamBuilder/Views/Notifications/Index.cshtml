@@ -1,0 +1,36 @@
+@model NotificationsPageModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+<h1>Notifications</h1>
+
+@if (Model.Items.Count == 0)
+{
+    <p>Nothing here yet.</p>
+}
+else
+{
+    @if (Model.Unread > 0)
+    {
+        <form method="post" asp-action="MarkAllRead">
+            <button type="submit">Mark all as read (@Model.Unread)</button>
+        </form>
+    }
+    <ul>
+        @foreach (var n in Model.Items)
+        {
+            <li>
+                @if (n.ReadUtc == null) { <b>New:</b> }
+                @if (!string.IsNullOrEmpty(n.Link) && n.Link.StartsWith("/") && !n.Link.StartsWith("//"))
+                {
+                    <a href="@n.Link">@n.Message</a>
+                }
+                else
+                {
+                    @n.Message
+                }
+                <small>(@n.CreatedUtc.ToString("yyyy-MM-dd HH:mm") UTC)</small>
+            </li>
+        }
+    </ul>
+}
