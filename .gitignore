@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+.idea/
+.vscode/
+
+# Local data. Never commit a database or uploaded files.
+*.db
+*.db-shm
+*.db-wal
+src/LeagueTeamBuilder/App_Data/
+src/LeagueTeamBuilder/wwwroot/uploads/
+
+# Secrets. Settings that are secret come from environment variables or `dotnet user-secrets`, never from files in the repo.
+appsettings.Local.json
+appsettings.*.local.json
+.env
+secrets.json
+
+# OS
+.DS_Store
+Thumbs.db

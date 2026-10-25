@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LeagueTeamBuilder</RootNamespace>
+    <UserSecretsId>29dbee25-7f31-4c44-973e-262ef993b92e</UserSecretsId>
+  </PropertyGroup>
+
+  <!--
+    Only what the League code needs (checked by grep in step A1): EF Core, Identity, SkiaSharp.
+    Not used by the League code, so left out: AWS S3, MailKit, ClosedXML, QRCoder, Google sign-in, SkiaSharp.HarfBuzz.
+    Versions pinned on 2026-10-25 from the first successful restore (EF Core and Identity 10.0.14, Npgsql provider 10.0.3).
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Image decode check for uploads (map images now, rank badges in Phase B). Kept on 2.88.9 so the code written against it compiles unchanged. -->
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+    <!-- Native Linux library for Docker/Render. Windows and macOS natives come with SkiaSharp itself. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.9" />
+  </ItemGroup>
+
+</Project>
