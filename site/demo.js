@@ -378,8 +378,12 @@
       var s = steps[i]; if (s.before) s.before(); var el = $(s.sel);
       $('#tt', wrap).textContent = s.title; $('#td', wrap).textContent = s.text;
       $('[data-a=back]', wrap).disabled = i === 0; $('[data-a=next]', wrap).textContent = i === steps.length - 1 ? 'Done' : 'Next (' + (i + 1) + '/' + steps.length + ')';
-      if (el) el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
-      place(); setTimeout(place, 350); $('[data-a=next]', wrap).focus();
+      if (el) {
+        // inside an iframe, scrollIntoView can also scroll the parent page, so scroll only this document
+        if (framed) { var er = el.getBoundingClientRect(); window.scrollTo({ top: Math.max(0, er.top + (window.pageYOffset || 0) - innerHeight / 2 + er.height / 2), behavior: reduce ? 'auto' : 'smooth' }); }
+        else el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+      }
+      place(); setTimeout(place, 350); $('[data-a=next]', wrap).focus({ preventScroll: true });
     }
     function end() {
       window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true); document.removeEventListener('keydown', key, true);
@@ -436,6 +440,6 @@
   var tb = $('#tour-btn');
   tb.addEventListener('click', function () { startTour(TOURS[curTab] || BUILDER_TOUR, tb); });
   var framed = false; try { framed = window.self !== window.top; } catch (e) { framed = true; }
-  if (!framed && !store('ltb-tour-seen') && window.requestAnimationFrame) { store('ltb-tour-seen', '1'); setTimeout(function () { startTour(BUILDER_TOUR, tb); }, 500); }
+  if (!store('ltb-tour-seen') && window.requestAnimationFrame) { store('ltb-tour-seen', '1'); setTimeout(function () { startTour(BUILDER_TOUR, tb); }, 500); }
   sync();
 })();

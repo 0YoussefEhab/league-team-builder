@@ -3,7 +3,7 @@
 [data-look="brutal"]{--bg:#0f0f10;--bg2:#1a1a1c;--ink:#f4f4f0;--mut:#a3a3a0;--line:#f4f4f0;--rule:#3a3a3d;--a:#4d8dff;--b:#ff4d42;--on:#0f0f10;--ctl:#f4f4f0;--r:0;--disp:Impact,"Arial Black",system-ui,sans-serif}
 [data-look="forest"]{--bg:#0b1511;--bg2:#12211a;--ink:#e8f5ec;--mut:#86a393;--line:#23402f;--rule:#23402f;--a:#4ade80;--b:#ff8a65;--on:#062014;--ctl:#5f8a72;--r:14px;--disp:"Trebuchet MS",system-ui,sans-serif;--body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);overflow-wrap:break-word;-webkit-text-size-adjust:100%;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.5 var(--body);overflow-wrap:break-word;-webkit-text-size-adjust:100%;min-width:0}
 h1,h2{font-family:var(--disp);line-height:1.2;margin:0 0 .5em}
 h1{font-size:1.6rem;margin:.6em 0 .4em}
 h2{font-size:1.05rem}
@@ -128,3 +128,21 @@ main{padding:4px 10px 28px}
 }
 @media (max-height:480px){.tbox{padding:8px}.tbox p{margin:.1em 0 .5em}}
 @media (forced-colors:active){.pl[aria-pressed="true"],.mk[aria-pressed="true"]{outline:3px solid Highlight}}
+
+/* shown inside another page (an iframe): a bit smaller, so more of the app fits in the frame */
+html.framed{font-size:14px}
+html.framed .bar{padding:6px 12px;gap:6px 10px}
+html.framed .brand{font-size:1rem}
+html.framed .banner{padding:4px 12px;font-size:.78rem}
+html.framed h1{font-size:1.3rem;margin:.4em 0 .3em}
+html.framed main{padding:4px 12px 32px}
+html.framed .card{padding:10px 12px;margin:10px 0}
+html.framed .btn{padding:6px 12px}
+html.framed .tabs button,html.framed .looks button,html.framed .bar .gh{padding:4px 10px}
+html.framed .pl{padding:6px 8px}
+html.framed .opts label{padding:6px 8px;margin:4px 0}
+html.framed .foot{padding:10px 12px;font-size:.78rem}
+html.framed .tbox{width:min(270px,calc(100vw - 16px));padding:10px 12px}
+html.framed .tbox h2{font-size:.95rem}
+html.framed .tbox p{margin:.1em 0 .6em;font-size:.9rem;line-height:1.4}
+html.framed .tnav .btn{padding:5px 10px}
