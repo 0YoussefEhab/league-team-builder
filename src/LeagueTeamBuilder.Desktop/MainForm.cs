@@ -15,6 +15,7 @@ namespace LeagueTeamBuilder.Desktop
         public MainForm()
         {
             Text = Program.AppTitle;
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             StartPosition = FormStartPosition.CenterScreen;
             ClientSize = new Size(1366, 820);
             MinimumSize = new Size(900, 600);

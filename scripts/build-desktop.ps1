@@ -22,7 +22,7 @@ Write-Host "Built: $out"
 
 if ($Pack) {
   vpk pack --packId LeagueTeamBuilder --packVersion $Version --packDir $out --mainExe LeagueTeamBuilderDesktop.exe `
-    --packTitle "League Team Builder" --outputDir "$root\artifacts\installer"
+    --packTitle "League Team Builder" --icon "$root\src\LeagueTeamBuilder.Desktop\app.ico" --outputDir "$root\artifacts\installer"
   if ($LASTEXITCODE) { throw "vpk pack failed" }
   Write-Host "Installer: $root\artifacts\installer"
 }
