@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Windows desktop shell. It contains NO League code: it starts the normal web app (src/LeagueTeamBuilder, unchanged) as a
+    hidden child process on 127.0.0.1 and shows it in a WebView2 window. So the views and the back-end logic are the same files
+    as the web edition. See docs/DESKTOP.md.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>LeagueTeamBuilder.Desktop</RootNamespace>
+    <AssemblyName>LeagueTeamBuilderDesktop</AssemblyName>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Version not checked against NuGet (no network in the authoring environment). If restore says it does not exist, use the latest 1.0.x. -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+  </ItemGroup>
+
+</Project>
