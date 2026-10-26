@@ -1,121 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HFE NFC Card Templates</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#12161f; --ink:#eef1f6; --soft:#9aa7bd; --border:#2a3142; --surface:#1a212c;
-  --teal:#4fd1c9;
-  --display:"Space Grotesk","DM Sans",Inter,sans-serif;
-  --body:"DM Sans",Inter,sans-serif;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.5}
-header{max-width:1180px;margin:0 auto;padding:40px 20px 8px}
-h1{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 6px}
-header p{color:var(--soft);margin:0;max-width:720px}
-.bar{max-width:1180px;margin:18px auto 0;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.bar button{font:inherit;font-weight:500;background:var(--surface);color:var(--ink);border:1px solid var(--border);padding:8px 14px;border-radius:999px;cursor:pointer}
-.bar button[aria-pressed="true"]{background:var(--teal);color:#0b1a1a;border-color:var(--teal)}
-.bar span{color:var(--soft);font-size:.85rem}
-main{max-width:1180px;margin:0 auto;padding:22px 20px 60px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:28px}
-figure{margin:0}
-figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 4px 0}
-figcaption b{font-family:var(--display);font-size:1.05rem}
-figcaption small{color:var(--soft)}
-figcaption a{color:var(--teal);font-size:.85rem;text-decoration:none;white-space:nowrap}
-figcaption a:hover{text-decoration:underline}
-
-/* ---- the card: same layout as .hfe-nfc-card-preview on the site, sized in cqw so it scales (1cqw = 4.8px at the site's 480px width) ---- */
-.card-wrap{container-type:inline-size;max-width:520px}
-.card{min-height:0;
-  --accent:var(--teal);
-  position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;
-  aspect-ratio:16/9;width:100%;color:var(--ink);
-  border:1px solid var(--border);border-radius:calc(.9rem * 1);
-  padding:calc(4.5cqw) calc(5cqw) calc(4.5cqw);gap:3cqw;
-  background-size:cover;background-position:center;
-  box-shadow:0 18px 40px rgba(0,0,0,.45);
-}
-body.site-accent .card{min-height:0;--accent:var(--teal)}
-.card::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(6,10,14,.35),rgba(6,10,14,.55));z-index:0}
-.top,.bottom{position:relative;z-index:1;display:flex;justify-content:space-between;gap:3cqw}
-.top{align-items:flex-start}.bottom{align-items:flex-end}
-.brand{display:flex;align-items:center;gap:2cqw}
-.brand img{width:7.5cqw;height:7.5cqw;object-fit:contain}
-.brand span{font-family:var(--display);font-weight:700;font-size:5.6cqw;white-space:nowrap}
-.qr{width:12.5cqw;height:12.5cqw;background:#fff;border-radius:1.3cqw;padding:.7cqw;display:flex}
-.qr img{width:100%;height:100%;display:block}
-.name{font-family:var(--display);font-weight:700;font-size:5.6cqw;line-height:1.15;display:inline-block;padding-bottom:1cqw;border-bottom:.45cqw solid var(--ink)}
-.titles{color:var(--accent);font-size:3.3cqw;line-height:1.4;margin-top:1.3cqw;max-width:48cqw}
-.contact{font-size:3.1cqw;color:#c3cddd;line-height:1.6;text-align:right}
-footer{max-width:1180px;margin:0 auto;padding:0 20px 50px;color:var(--soft);font-size:.85rem}
-code{background:var(--surface);padding:2px 6px;border-radius:6px}
-</style>
+<meta name="color-scheme" content="dark">
+<title>League Team Builder: live demo</title>
+<meta name="description" content="Try League Team Builder in your browser. Invented players, nothing is saved.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%230e1013%27/%3E%3Cpath d=%27M6 6h6v14h12v6H6z%27 fill=%27%2319d3ff%27/%3E%3C/svg%3E">
+<script>try{if(window.self!==window.top)document.documentElement.classList.add("framed")}catch(e){document.documentElement.classList.add("framed")}</script>
+<link rel="stylesheet" href="demo.css?v=3">
 </head>
 <body>
-<header>
-  <h1>HFE NFC Card Templates</h1>
-  <p>8 background templates for the HFE card. Each is a 1920×1080 PNG that drops straight into <b>Admin → NFC Cards → Templates</b>. The cards below show them on the real card layout (logo + QR on top, name and contact at the bottom).</p>
-</header>
-<div class="bar">
-  <button id="btnTpl" aria-pressed="true">Accent matches template</button>
-  <button id="btnSite" aria-pressed="false">Accent as on the site (teal)</button>
-  <span>Names, QR and contact details are sample data. The QR is a placeholder, not scannable.</span>
-</div>
-
-<main id="grid"></main>
-
-<footer>
-  Background PNGs: <code>backgrounds/</code> · full card previews: <code>previews/</code>. Dark backgrounds are on purpose: the card text is light, so a light background would make it unreadable.
-</footer>
-
-<script>
-const T = [
-  {id:'aurora',        name:'Aurora',         tag:'For anyone · soft & modern',            accent:'#6fe3d6', who:'Layla Hassan',     titles:'Product Designer · UI/UX',            phone:'+20 100 123 4567', email:'layla@hfecloud.com'},
-  {id:'blueprint',     name:'Blueprint',      tag:'Architecture engineers',                accent:'#9fd0ff', who:'Omar El-Sayed',    titles:'Architect · BIM Specialist',           phone:'+20 111 234 5678', email:'omar@hfecloud.com'},
-  {id:'mechanical',    name:'Mechanical',     tag:'Mechanical engineers',                  accent:'#ff9a45', who:'Karim Nabil',      titles:'Mechanical Engineer · CAD / CAM',      phone:'+20 122 345 6789', email:'karim@hfecloud.com'},
-  {id:'molecule',      name:'Molecule',       tag:'Pharmacy students',                     accent:'#5ff2c0', who:'Mariam Adel',      titles:'Pharmacy Student · Clinical Research', phone:'+20 106 456 7890', email:'mariam@hfecloud.com'},
-  {id:'executive-gold',name:'Executive Gold', tag:'Business students',                     accent:'#f0c36a', who:'Youssef Tarek',    titles:'Business Student · Marketing · Finance',phone:'+20 109 567 8901', email:'youssef@hfecloud.com'},
-  {id:'neon-grid',     name:'Neon Grid',      tag:'Game devs · creators',                  accent:'#ff7ac0', who:'Nour Khaled',      titles:'Game Developer · Unity · Level Design', phone:'+20 101 678 9012', email:'nour@hfecloud.com'},
-  {id:'topographic',   name:'Topographic',    tag:'Civil · surveying · outdoors',          accent:'#9fe8b8', who:'Ahmed Fathy',      titles:'Civil Engineer · Site Planning',       phone:'+20 112 789 0123', email:'ahmed@hfecloud.com'},
-  {id:'carbon-hex',    name:'Carbon Hex',     tag:'Tech · data · hardware',                accent:'#ffb02e', who:'Mostafa Samy',     titles:'Data Analyst · BI · Power BI',         phone:'+20 100 890 1234', email:'mostafa@hfecloud.com'},
-];
-const grid = document.getElementById('grid');
-grid.innerHTML = T.map(t => `
-<figure id="${t.id}">
-  <div class="card-wrap">
-    <div class="card" data-accent="${t.accent}" style="background-image:url('backgrounds/${t.id}.png')">
-      <div class="top">
-        <div class="brand"><img src="assets/hfe-icon-transparent.png" alt=""><span>HFECloud</span></div>
-        <div class="qr"><img src="assets/sample-qr.svg" alt=""></div>
-      </div>
-      <div class="bottom">
-        <div>
-          <div class="name">${t.who}</div>
-          <div class="titles">${t.titles}</div>
-        </div>
-        <div class="contact"><div>${t.phone}</div><div>${t.email}</div><div>hfecloud.com</div></div>
-      </div>
-    </div>
+<a class="skip" href="#main">Skip to content</a>
+<div id="app">
+<header class="bar">
+  <a class="brand" href="./">League Team Builder</a>
+  <div class="tabs" role="tablist" aria-label="Pages" id="tabs">
+    <button role="tab" id="t-builder" aria-controls="p-builder" aria-selected="true">Team builder</button>
+    <button role="tab" id="t-clash" aria-controls="p-clash" aria-selected="false" tabindex="-1">Clash</button>
+    <button role="tab" id="t-history" aria-controls="p-history" aria-selected="false" tabindex="-1">History</button>
   </div>
-  <figcaption><span><b>${t.name}</b> <small>· ${t.tag}</small></span>
-    <a href="backgrounds/${t.id}.png" download>Download background</a></figcaption>
-</figure>`).join('');
+  <div class="looks" id="looks" role="group" aria-label="Look">
+    <button type="button" data-look="steel" aria-pressed="true">Steel</button>
+    <button type="button" data-look="brutal" aria-pressed="false">Brutal</button>
+    <button type="button" data-look="forest" aria-pressed="false">Forest</button>
+  </div>
+  <a class="gh" href="https://github.com/0YoussefEhab/league-team-builder" rel="noopener">GitHub</a>
+  <button type="button" class="btn main" id="tour-btn">Take the tour</button>
+</header>
+<p class="banner">Demo with invented players. Nothing is saved. <strong>Not endorsed by or affiliated with Riot Games.</strong></p>
 
-const cards = [...document.querySelectorAll('.card')];
-function setMode(tpl){
-  cards.forEach(c => c.style.setProperty('--accent', tpl ? c.dataset.accent : '#4fd1c9'));
-  btnTpl.setAttribute('aria-pressed', tpl); btnSite.setAttribute('aria-pressed', !tpl);
-}
-btnTpl.onclick = () => setMode(true);
-btnSite.onclick = () => setMode(false);
-setMode(true);
-</script>
+<main id="main" tabindex="-1">
+<noscript><p class="card nojs">This demo needs JavaScript. Turn it on in your browser, or read about the project on GitHub.</p></noscript>
+
+<section id="p-builder" role="tabpanel" aria-labelledby="t-builder">
+  <h1>Team builder</h1>
+  <div class="card">
+    <h2 id="players-head">1. Pick players <span class="mut" id="count">0 / 10</span></h2>
+    <div class="players" id="players"></div>
+    <p class="mut" id="msg" role="status"></p>
+  </div>
+  <div class="two">
+    <div class="card"><h2 id="mode-head">2. Game mode</h2>
+      <div class="opts" id="modes" role="radiogroup" aria-label="Game mode"></div></div>
+    <div class="card"><h2 id="bal-head">3. How to balance</h2>
+      <div class="opts" id="bals" role="radiogroup" aria-label="Balancing mode"></div></div>
+  </div>
+  <p><button type="button" class="btn main" id="gen" disabled>Generate teams</button></p>
+  <div class="two" id="result"></div>
+</section>
+
+<section id="p-clash" role="tabpanel" aria-labelledby="t-clash" hidden>
+  <h1>Clash</h1>
+  <div id="clash"></div>
+</section>
+<section id="p-history" role="tabpanel" aria-labelledby="t-history" hidden>
+  <h1>History</h1>
+  <div id="history"></div>
+</section>
+</main>
+<footer class="foot">League Team Builder is open source (MIT). Demo with invented players, nothing is saved. Map pictures © Riot Games. Not endorsed by or affiliated with Riot Games.</footer>
+</div>
+<script src="league-stats-import.js"></script>
+<script src="demo.js?v=3"></script>
 </body>
 </html>
