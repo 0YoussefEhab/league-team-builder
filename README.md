@@ -6,10 +6,19 @@ Build fair teams for League of Legends custom games, keep the history, and run y
 
 **Status:** `v0.1.0`. This repository contains the web edition (run it yourself, or with Docker) and a Windows desktop edition that runs the same app on your own computer.
 
+**Try it:** [live demo in your browser](https://league-team-builder.vercel.app/) (invented players, nothing is saved) · [project page on HFECloud](https://www.hfecloud.com/project/league-team-builder)
+
 ## Download
 
-- **Windows desktop app:** [get the latest installer](https://github.com/0YoussefEhab/league-team-builder/releases/latest) and run `LeagueTeamBuilder-win-Setup.exe`. It installs for your user account (no admin needed) and works offline. Windows SmartScreen may say "unknown publisher" because the installer is not code-signed: click **More info, then Run anyway**.
-- **Self-host the website:** see [Run it](#run-it) or [Run with Docker](#run-with-docker) below.
+Everything below is the same app. Pick one:
+
+- **Windows desktop app (installer):** [get the latest installer](https://github.com/0YoussefEhab/league-team-builder/releases/latest) and run `LeagueTeamBuilder-win-Setup.exe`. It installs for your user account (no admin needed) and works offline.
+- **Windows desktop app (portable ZIP):** `LeagueTeamBuilder-win-Portable.zip` from the same release. Unzip it anywhere and run it, nothing is installed.
+- **Web edition (source):** clone this repository, or download the source ZIP from the project page. See [Run it](#run-it) or [Run with Docker](#run-with-docker) below.
+
+The installer, the portable ZIP and the web edition source are also available from the **[League Team Builder project page on HFECloud](https://www.hfecloud.com/project/league-team-builder)**, next to the live demo.
+
+The Windows files are not code-signed, so Windows SmartScreen may say "unknown publisher": click **More info, then Run anyway**.
 
 ## What it does
 
@@ -124,6 +133,10 @@ The tests cover the role table and its filter, the look picker, game names, matc
 ## Contributions
 
 **This project does not accept contributions.** Pull requests will not be merged. The code is MIT licensed: fork it and change your own copy however you like.
+
+## Author
+
+Built by Youssef Ehab. More projects at [HFECloud](https://www.hfecloud.com).
 
 ## License
 
