@@ -21,7 +21,7 @@ if (-not (Test-Path "$out\LeagueTeamBuilder.exe") -or -not (Test-Path "$out\Leag
 Write-Host "Built: $out"
 
 if ($Pack) {
-  vpk pack --packId LeagueTeamBuilder --packVersion $Version --packDir $out --mainExe LeagueTeamBuilderDesktop.exe `
+  vpk pack --packId LeagueTeamBuilder --runtime win-x64 --packVersion $Version --packDir $out --mainExe LeagueTeamBuilderDesktop.exe `
     --packTitle "League Team Builder" --icon "$root\src\LeagueTeamBuilder.Desktop\app.ico" --outputDir "$root\artifacts\installer"
   if ($LASTEXITCODE) { throw "vpk pack failed" }
   Write-Host "Installer: $root\artifacts\installer"
