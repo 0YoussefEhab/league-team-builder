@@ -22,6 +22,7 @@
   <ItemGroup>
     <!-- Version not checked against NuGet (no network in the authoring environment). If restore says it does not exist, use the latest 1.0.x. -->
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
 </Project>

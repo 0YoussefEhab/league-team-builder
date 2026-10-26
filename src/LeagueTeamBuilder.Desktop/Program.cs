@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Velopack;
 
 namespace LeagueTeamBuilder.Desktop
 {
@@ -9,6 +10,9 @@ namespace LeagueTeamBuilder.Desktop
         [STAThread]
         private static void Main()
         {
+            // Must be the first thing: the installer starts the app with special arguments (install, uninstall, update) that this handles.
+            VelopackApp.Build().Run();
+
             // One copy at a time: a second start just brings the first window to the front.
             using var mutex = new Mutex(true, @"Local\LeagueTeamBuilder.Desktop", out var first);
             if (!first)
