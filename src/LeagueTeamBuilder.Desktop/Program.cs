@@ -43,12 +43,12 @@ namespace LeagueTeamBuilder.Desktop
         [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr h);
     }
 
-    // Where things live. Everything the user creates is under %LocalAppData%\LeagueTeamBuilder, never in the install folder,
-    // so an update (which replaces the install folder) cannot touch the database.
+    // Where things live. Everything the user creates is under %LocalAppData%\LeagueTeamBuilderData, NOT %LocalAppData%\LeagueTeamBuilder:
+    // the installer (Velopack) owns that second folder, replaces it on every update and deletes it on uninstall.
     internal static class Paths
     {
         public static readonly string Data = Directory.CreateDirectory(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LeagueTeamBuilder")).FullName;
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LeagueTeamBuilderData")).FullName;
         public static string Database => Path.Combine(Data, "leagueteambuilder.db");
         public static string ServerLog => Path.Combine(Data, "server.log");
         public static string DesktopLog => Path.Combine(Data, "desktop.log");
@@ -56,5 +56,41 @@ namespace LeagueTeamBuilder.Desktop
         public static string WebViewData => Path.Combine(Data, "webview");
         // The web app is published into the same folder as this exe.
         public static string ServerExe => Path.Combine(AppContext.BaseDirectory, "LeagueTeamBuilder.exe");
+
+        // The web app saves uploaded pictures (map images, avatars, rank badges) under wwwroot\uploads, which is inside the install
+        // folder and is replaced on every update. So wwwroot\uploads is made a junction (a folder link, no admin needed) to
+        // <Data>\uploads. Done on every start, because an update brings a fresh empty wwwroot\uploads.
+        public static void LinkUploads()
+        {
+            var store = Directory.CreateDirectory(Path.Combine(Data, "uploads")).FullName;
+            var link = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads");
+            var info = new DirectoryInfo(link);
+
+            if (info.Exists && info.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                var current = info.LinkTarget?.TrimEnd('\\', '/');
+                if (string.Equals(current, store.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase)) return;
+                Directory.Delete(link, false); // removes only the link, never what it points to
+            }
+            else if (info.Exists)
+            {
+                // A real folder (first start after an install or update): keep anything in it, then replace it with the link.
+                foreach (var entry in Directory.GetFileSystemEntries(link))
+                {
+                    var dest = Path.Combine(store, Path.GetFileName(entry));
+                    if (File.Exists(dest) || Directory.Exists(dest)) continue;
+                    if (Directory.Exists(entry)) Directory.Move(entry, dest); else File.Move(entry, dest);
+                }
+                Directory.Delete(link, true);
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(link)!);
+            var psi = new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{store}\"")
+            { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+            using var p = System.Diagnostics.Process.Start(psi)!;
+            var err = p.StandardError.ReadToEnd() + p.StandardOutput.ReadToEnd();
+            p.WaitForExit();
+            if (p.ExitCode != 0) throw new IOException("Could not link the uploads folder: " + err.Trim());
+        }
     }
 }

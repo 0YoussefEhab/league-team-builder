@@ -5,7 +5,8 @@ The desktop app is a thin window around the normal web app. It has **no League c
 ## How it works
 - `LeagueTeamBuilderDesktop.exe` (this project) starts `LeagueTeamBuilder.exe` (the web app) hidden, on `127.0.0.1:47821` (a free port if that one is taken), waits for `/healthz`, then shows it in a WebView2 window.
 - Closing the window stops the server. A Windows job object also stops it if the window process is killed.
-- Data lives in `%LocalAppData%\LeagueTeamBuilder\` (`leagueteambuilder.db`, `server.log`, `desktop.log`, `webview\`), never in the install folder, so updates cannot touch it.
+- Data lives in `%LocalAppData%\LeagueTeamBuilderData\` (`leagueteambuilder.db`, `uploads\`, `server.log`, `desktop.log`, `webview\`). It is deliberately NOT `%LocalAppData%\LeagueTeamBuilder\`: that is the installer's folder, replaced on every update and deleted on uninstall.
+- The web app saves uploaded pictures under `wwwroot\uploads`. At every start the shell makes that folder a junction to `<data>\uploads`, so uploads survive updates.
 - First start: a small form asks for the first Admin e-mail and password (the web edition reads them from user-secrets / environment variables). They are passed to the server once, through its environment.
 - Links to other sites open in the normal browser.
 

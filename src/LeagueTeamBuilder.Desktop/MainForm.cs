@@ -53,6 +53,7 @@ namespace LeagueTeamBuilder.Desktop
                 }
 
                 _status.Text = "Starting League Team Builder...";
+                Paths.LinkUploads();
                 _server.Start(email, password);
                 // The first start also creates and migrates the database, so give it more time.
                 if (!await _server.WaitUntilReadyAsync(TimeSpan.FromSeconds(90), _cts.Token))

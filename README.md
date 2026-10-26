@@ -4,7 +4,12 @@ Build fair teams for League of Legends custom games, keep the history, and run y
 
 > **Not endorsed by or affiliated with Riot Games.** League of Legends and Riot Games are trademarks of Riot Games, Inc. This is a fan-made community tool. It contains no Riot artwork: rank badges are neutral placeholders you can replace with your own pictures. Champion names are listed as plain text only.
 
-**Status:** pre-release, heading for `v0.1.0`. The web edition is what this repository contains. A downloadable offline desktop edition is planned for later and does not exist yet.
+**Status:** `v0.1.0`. This repository contains the web edition (run it yourself, or with Docker) and a Windows desktop edition that runs the same app on your own computer.
+
+## Download
+
+- **Windows desktop app:** [get the latest installer](https://github.com/0YoussefEhab/league-team-builder/releases/latest) and run `LeagueTeamBuilder-win-Setup.exe`. It installs for your user account (no admin needed) and works offline. Windows SmartScreen may say "unknown publisher" because the installer is not code-signed: click **More info, then Run anyway**.
+- **Self-host the website:** see [Run it](#run-it) or [Run with Docker](#run-with-docker) below.
 
 ## What it does
 
@@ -20,8 +25,6 @@ Build fair teams for League of Legends custom games, keep the history, and run y
 
 ## Screenshots
 
-<!-- These six images are not in the repository yet. Add them to docs/screenshots/ before the repository goes public (step D4). The shot list is in EXTRACTION-PLAN.md, section 9, D2. -->
-
 | | |
 |---|---|
 | ![Overview in the Steel look](docs/screenshots/overview-steel.png) | ![Team builder](docs/screenshots/builder-steel.png) |
@@ -33,7 +36,7 @@ Build fair teams for League of Legends custom games, keep the history, and run y
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download) (the repository pins it in `global.json`). Nothing else: the database is a single SQLite file.
 
 ```bash
-git clone https://github.com/<owner>/league-team-builder.git
+git clone https://github.com/0YoussefEhab/league-team-builder.git
 cd league-team-builder/src/LeagueTeamBuilder
 
 # The first Admin account. Stored outside the repository (user-secrets), never in a file you commit.
@@ -73,6 +76,12 @@ The database and the uploaded pictures live in one Docker volume mounted at `/da
 
 Behind a reverse proxy that handles https, uncomment `ASPNETCORE_FORWARDEDHEADERS_ENABLED` in `docker-compose.yml`. Do not set it when people reach the container directly. Keep the database on a local disk or a Docker volume, not on a network share, because SQLite does not work reliably on one.
 
+## Windows desktop app
+
+The desktop app is a thin window around this same web app: it starts the site on your own computer (`127.0.0.1` only) and shows it in a window, so the pages and the logic are the same files. The first start asks for the first Admin e-mail and password. Your data lives in `%LocalAppData%\LeagueTeamBuilderData` (the database, uploaded pictures, logs and settings), never in the install folder, so updating, reinstalling and uninstalling do not touch it. Delete that folder if you want a clean slate.
+
+It needs Windows 10 or 11 (64-bit) with the Microsoft WebView2 Runtime, which both include. To build it yourself, see [docs/DESKTOP.md](docs/DESKTOP.md).
+
 ## Roles
 
 New accounts are **Members**. An Admin changes roles in `/Admin/Users`.
@@ -100,7 +109,7 @@ Set values in `appsettings.json`, with `dotnet user-secrets` while developing, o
 
 ## Your data
 
-Everything lives in two places: the SQLite file (`Database:Path`, plus its `-wal` and `-shm` files while the site runs) and the pictures people upload (`wwwroot/uploads/`). To back up or move the site, stop it and copy both. (In Docker both are inside `/data`, see above.) Sign-in keys are stored in the database, so people stay signed in across restarts. There is no sync between two installations.
+Everything lives in two places: the SQLite file (`Database:Path`, plus its `-wal` and `-shm` files while the site runs) and the pictures people upload (`wwwroot/uploads/`). To back up or move the site, stop it and copy both. (In Docker both are inside `/data`, see above. In the Windows desktop app, copy `%LocalAppData%\LeagueTeamBuilderData` while the app is closed.) Sign-in keys are stored in the database, so people stay signed in across restarts. There is no sync between two installations.
 
 Passwords are handled by ASP.NET Core Identity. The site sends no e-mail, so password reset by e-mail does nothing: an Admin sets a new password for a member who forgets theirs.
 
