@@ -11,7 +11,7 @@
    - Fill from screenshots (Step 13, only rendered for people allowed LeagueMatch > ImportStats on a finished match):
      step 1 = the game name of every player (13a), step 2 = an optional champion per player and "Copy prompt" (13b),
      step 3 = paste the answer, "Check the answer" (a list of what was read and what was not), "Fill the form" (13c; also needs
-     LeagueMatch > Stats). The prompt and the reader live in league-stats-import.js (window.HfeStatsImport). Nothing is sent anywhere
+     LeagueMatch > Stats). The prompt and the reader live in league-stats-import.js (window.LtbStatsImport). Nothing is sent anywhere
      and nothing is saved by step 3: it only fills the Step 5c form, which is saved with its own Save stats. */
 (function () {
     'use strict';
@@ -554,7 +554,7 @@
         impSay(errEl, '');
         if (fall) fall.hidden = true;
 
-        var lib = window.HfeStatsImport;
+        var lib = window.LtbStatsImport;
         if (!lib || typeof lib.buildPrompt !== 'function') {
             impSay(errEl, 'The prompt script did not load. Reload the page (Ctrl+F5) and try again.');
             return;
@@ -697,7 +697,7 @@
         var fillBtn = form.querySelector('[data-lgh-impfill]');
         impSay(errEl, '');
         impSay(sumEl, '');
-        var lib = window.HfeStatsImport;
+        var lib = window.LtbStatsImport;
         if (!lib || typeof lib.parseAnswer !== 'function') {
             impSay(errEl, 'The reader script did not load. Reload the page (Ctrl+F5) and try again.');
             return;
@@ -859,7 +859,7 @@
 
     // ── Other stats chips (step 13d) ──────────────────────────────────────────────────────────────────
     function chipLabel(name) {
-        var lib = window.HfeStatsImport;
+        var lib = window.LtbStatsImport;
         return lib && lib.extraLabel ? lib.extraLabel(name) : name;
     }
     function chipText(name, value) { return chipLabel(name) + ' ' + Number(value).toLocaleString('en-US'); }
@@ -1237,7 +1237,7 @@
     // (no stats form, the script did not load), so the page works as it did before.
     function scoreNotice(scope, res) {
         try {
-            var lib = window.HfeStatsImport;
+            var lib = window.LtbStatsImport;
             var sf = scope ? scope.querySelector('[data-lgh-statsform]') : null;
             if (!sf || !lib || typeof lib.scoreReadiness !== 'function' || typeof lib.describeReadiness !== 'function') return [];
             var teams = readStatsTeams(sf);

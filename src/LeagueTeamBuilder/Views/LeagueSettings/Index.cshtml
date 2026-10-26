@@ -8,6 +8,7 @@
     var canChampions = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Champions");
     var canClash = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "ClashSchedule");
     var canAutoSend = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "AutoSend");
+    var canBadges = await PermissionChecker.CanAccessAsync(User, "LeagueSettings", "Badges");
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
@@ -42,7 +43,7 @@
         {
             <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Guests">
                 <strong>Guests</strong>
-                <span>Players without an HFECloud account: add, edit or delete them.</span>
+                <span>Players without an account: add, edit or delete them.</span>
             </a>
         }
         @if (canClash)
@@ -59,6 +60,13 @@
                 <span>Post the result picture to the League channel by itself when a game is finished.</span>
             </a>
         }
+        @if (canBadges)
+        {
+            <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Badges">
+                <strong>Rank badges</strong>
+                <span>Upload your own picture for each rank, or keep the default ones.</span>
+            </a>
+        }
         @if (canChampions)
         {
             <a class="lg-tile" asp-controller="LeagueSettings" asp-action="Champions">
@@ -67,7 +75,7 @@
             </a>
         }
     </div>
-    @if (!canModes && !canTiers && !canGuests && !canChampions && !canClash && !canAutoSend)
+    @if (!canModes && !canTiers && !canGuests && !canChampions && !canClash && !canAutoSend && !canBadges)
     {
         <p class="lg-sub">Nothing else has been granted to your group yet.</p>
     }

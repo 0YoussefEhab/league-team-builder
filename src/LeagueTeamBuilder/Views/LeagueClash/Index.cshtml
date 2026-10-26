@@ -28,7 +28,7 @@
         buildUrl = Url.Action("Build", "LeagueClash"),
         eventId = Model.SelectedId,
         mode = ev == null ? "normal" : LeagueBuilderService.ModeKey(ev.Mode),
-        iconBase = Url.Content("~/img/ranks/"),
+        icons = Badges.ByKey(),
         players = Model.Players,
         lanes = Model.Lanes,
         answeredBusy = Model.AnsweredBusy,
@@ -75,7 +75,7 @@
     <link rel="stylesheet" href="~/css/league-builder.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/league-clash.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/league-result-image.css" asp-append-version="true" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Poppins:wght@800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/fonts/result-image.css" asp-append-version="true" />
 }
 
 @* Step 6d. Built in the League style (league.css tokens, league-builder.css slot and dialog classes, league-clash.css for lgc-*).
@@ -158,7 +158,7 @@
     {
         <script src="~/js/league-export.js" asp-append-version="true"></script>
         <script src="~/js/league-time.js" asp-append-version="true"></script>
-        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <script src="~/lib/html2canvas/html2canvas.min.js"></script>
         <script src="~/js/league-send.js" asp-append-version="true"></script>
         <script src="~/js/league-result-image.js" asp-append-version="true"></script>
         <script src="~/js/league-auto-send.js" asp-append-version="true"></script>

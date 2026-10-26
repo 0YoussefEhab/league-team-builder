@@ -1,34 +1,35 @@
-/* "My league stats" on the league profile page (Step 5d), new design (PLAN-league-restyle.md, Step R2).
-   Scoped under lgs-*; sits inside a .lg-card on .lg-page, so it uses the --hv-* theme tokens and the
-   --lg-k radius multiplier / --lg-ok / --lg-danger defined in league.css. */
+/* "My league stats" on the league profile and player pages (Phase C, step C3).
+   Scoped under lgs-*; sits inside a .lg-card on .lg-page. Colours, radii and fonts come only from the --lh-* tokens
+   (and --lg-inset / --lg-acc-t from league.css). Recent form: W = done (--lh-ok), L = Side B, U = unknown (dashed).
+   Every class from the old file is unchanged. */
 .lgs-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 0 0 18px; }
-.lgs-tile { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 14px 16px; border: 1px solid var(--hv-line);
-  border-radius: calc(16px * var(--lg-k, 1)); background: var(--hv-card); }
-.lgs-val { font: 400 34px/1.05 var(--hv-disp); color: var(--hv-acc); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.lgs-lbl { font: 700 11px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-mut); }
-.lgs-note { font-size: 12px; color: var(--hv-mut); }
-/* the first (hero) tile is filled with the accent and uses dark text */
-.lgs-hero { background: linear-gradient(145deg, var(--hv-acc), color-mix(in srgb, var(--hv-acc) 82%, var(--hv-ink))); border-color: var(--hv-acc); }
-.lgs-hero .lgs-val, .lgs-hero .lgs-lbl, .lgs-hero .lgs-note { color: var(--hv-bg); }
+.lgs-tile { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 14px 16px; border: 1px solid var(--lh-rule);
+  border-radius: var(--lh-r); background: var(--lg-inset); }
+.lgs-val { font: var(--lh-dw) 34px/1.05 var(--lh-disp); color: var(--lh-a); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.lgs-lbl { font: 700 12px var(--lh-body); letter-spacing: .02em; color: var(--lh-mut); }
+.lgs-note { font-size: 12px; color: var(--lh-mut); }
+/* the first (hero) tile is filled with Side A and uses dark text */
+.lgs-hero { background: var(--lh-a); border-color: var(--lh-a); }
+.lgs-hero .lgs-val, .lgs-hero .lgs-lbl, .lgs-hero .lgs-note { color: var(--lh-bg); }
 
 .lgs-recent-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 18px; }
 .lgs-recent { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.lgs-recent li { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: calc(10px * var(--lg-k, 1));
-  border: 1px solid var(--hv-line); font: 700 12px var(--hv-body); }
-.lgs-recent .lgs-w { border-color: rgba(88,214,141,.55); color: var(--lg-ok, #58d68d); background: rgba(88,214,141,.1); }
-.lgs-recent .lgs-l { border-color: rgba(255,123,114,.55); color: var(--lg-danger, #ff7b72); background: rgba(255,123,114,.1); }
-.lgs-recent .lgs-u { border-style: dashed; color: var(--hv-mut); }
+.lgs-recent li { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--lh-rs);
+  border: 1px solid var(--lh-rule); font: 700 12px var(--lh-body); }
+.lgs-recent .lgs-w { border-color: color-mix(in srgb, var(--lh-ok) 55%, transparent); color: var(--lh-ok); background: color-mix(in srgb, var(--lh-ok) 12%, transparent); }
+.lgs-recent .lgs-l { border-color: color-mix(in srgb, var(--lh-b) 55%, transparent); color: var(--lh-b); background: color-mix(in srgb, var(--lh-b) 12%, transparent); }
+.lgs-recent .lgs-u { border-style: dashed; color: var(--lh-mut); }
 
 .lgs-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 22px; }
 .lgs-cols > * { min-width: 0; }
-.lgs-h3 { margin: 0 0 10px; font: 700 11px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-mut); }
+.lgs-h3 { margin: 0 0 10px; font: 600 12px var(--lh-body); letter-spacing: .06em; color: var(--lh-mut); }
 .lgs-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .lgs-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
-.lgs-list img { flex: none; border-radius: calc(6px * var(--lg-k, 1)); }
-.lgs-rank { width: 22px; flex: none; font: 400 20px/1 var(--hv-disp); color: var(--lg-acc-t); text-align: center; }
+.lgs-list img { flex: none; border-radius: var(--lh-rs); }
+.lgs-rank { width: 22px; flex: none; font: var(--lh-dw) 20px/1 var(--lh-disp); color: var(--lg-acc-t); text-align: center; }
 .lgs-name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lgs-meta { font-size: 12px; color: var(--hv-mut); font-variant-numeric: tabular-nums; white-space: nowrap; }
-/* thin accent progress bar: share of the most played entry */
-.lgs-bar { flex: 0 0 100%; order: 9; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--hv-line) 60%, transparent); overflow: hidden; }
-.lgs-bar i { display: block; height: 100%; width: var(--lgs-w, 0%); background: var(--hv-acc); border-radius: 3px; }
-.lgs-empty { margin: 0; font-size: 13px; color: var(--hv-mut); border: 1px dashed var(--hv-line); border-radius: calc(14px * var(--lg-k, 1)); padding: 16px; text-align: center; }
+.lgs-meta { font-size: 12px; color: var(--lh-mut); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* thin progress bar: share of the most played entry (the track is a divider colour) */
+.lgs-bar { flex: 0 0 100%; order: 9; height: 4px; border-radius: var(--lh-rs); background: var(--lh-rule); overflow: hidden; }
+.lgs-bar i { display: block; height: 100%; width: var(--lgs-w, 0%); background: var(--lh-a); border-radius: inherit; }
+.lgs-empty { margin: 0; font-size: 13px; color: var(--lh-mut); border: 1px dashed var(--lh-line); border-radius: var(--lh-r); padding: 16px; text-align: center; }

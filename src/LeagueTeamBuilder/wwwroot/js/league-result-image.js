@@ -24,9 +24,12 @@
     'use strict';
 
     var W = 1280, H = 720;
-    var TEAM_COLOR = ['#4fd1c9', '#e6b84f'];
+    var TEAM_COLOR = ['#19d3ff', '#ff7a1a'];
     var TROPHY = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 14v4M8 21h8M10 18h4"/></svg>';
     var STAR = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>';
+
+    // Site name from the page (Site:Name in appsettings, written by _Layout); the picture's footer and date line use it.
+    function siteName() { return (window.LTB_SITE && window.LTB_SITE.name) || 'League Team Builder'; }
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -89,7 +92,7 @@
         var wi = 0;
         for (var i = 0; i < teams.length; i++) if (teams[i].won) wi = i;
         var winnerName = teams[wi].name || ('Team ' + (wi + 1));
-        var winStyle = wi === 0 ? '--c:#4fd1c9;--on:#0b1a1a' : '--c:#e6b84f;--on:#2b1e08';
+        var winStyle = wi === 0 ? '--c:#19d3ff;--on:#04202a' : '--c:#ff7a1a;--on:#2a1204';
         var k0 = teams[0].kills, k1 = teams[1].kills;
         var killsText = k0 != null && k1 != null ? k0 + ' - ' + k1 + ' kills' : '';
         return '<div class="lri-tile" data-mode="' + (spec.mode === 'aram' ? 'aram' : 'normal') + '">' +
@@ -97,7 +100,7 @@
             '<div class="lri-rh"><div><div class="lri-k">Custom game · Result</div><h3>' + esc(spec.title) + '</h3><div class="lri-dt">' + esc(spec.date) + ' · HFECloud</div></div>' +
             '<div class="lri-win" style="' + winStyle + '"><div class="lri-tr">' + TROPHY + '</div><div><b>' + esc(winnerName) + ' won</b>' + (killsText ? '<small>' + killsText + '</small>' : '') + '</div></div></div>' +
             columnHtml(teams[0], 0, spec) + columnHtml(teams[1], 1, spec) +
-            '<div class="lri-ft"><span>hfecloud.com</span><span class="lri-lg"><span><b>★</b> MVP of the winning team</span><span>Team MVP on the other side</span></span></div>' +
+            '<div class="lri-ft"><span>' + esc(siteName()) + '</span><span class="lri-lg"><span><b>★</b> MVP of the winning team</span><span>Team MVP on the other side</span></span></div>' +
             '</div>';
     }
 
@@ -131,13 +134,13 @@
             '<div class="lri-rh"><div class="lri-rl"><div class="lri-k">' + kicker + '</div><h3>' + esc(spec.title) + '</h3>' + chip + '</div>' +
             '<div class="lri-rec"><b>' + spec.wins + '<i>-</i>' + spec.losses + '</b><small>' + esc(spec.when) + ' · ' + spec.played + ' of ' + max + ' played</small></div></div>' +
             '<div class="lri-gs">' + cards.join('') + '</div>' +
-            '<div class="lri-ft"><span>hfecloud.com</span><span class="lri-lg"><span><b>★</b> MVP of the game</span></span></div>' +
+            '<div class="lri-ft"><span>' + esc(siteName()) + '</span><span class="lri-lg"><span><b>★</b> MVP of the game</span></span></div>' +
             '</div>';
     }
 
     // ── Session collection (12e) ─────────────────────────────────────────────────────────────────
 
-    var SIDE_STYLE = ['--c:#4fd1c9;--on:#0b1a1a', '--c:#e6b84f;--on:#2b1e08'];
+    var SIDE_STYLE = ['--c:#19d3ff;--on:#04202a', '--c:#ff7a1a;--on:#2a1204'];
     var STAR_XS = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>';
     var STAR_XS_LINE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>';
 
@@ -185,10 +188,10 @@
             '<div class="lri-big"><div class="lri-k">Session result</div>' +
             '<div class="lri-srec">' + spec.winsA + '<i>-</i><span>' + spec.winsB + '</span></div>' +
             '<div class="lri-dt">' + games.length + (games.length === 1 ? ' game' : ' games') + ' · ' + esc(spec.date) + '<br>' + range + '</div>' +
-            '<div class="lri-stm"><span><i style="background:#4fd1c9"></i>Team 1 won ' + spec.winsA + '</span><span><i style="background:#e6b84f"></i>Team 2 won ' + spec.winsB + '</span></div>' +
+            '<div class="lri-stm"><span><i style="background:#19d3ff"></i>Team 1 won ' + spec.winsA + '</span><span><i style="background:#ff7a1a"></i>Team 2 won ' + spec.winsB + '</span></div>' +
             best + '</div>' +
             '<div class="lri-list">' + games.map(sessionRowHtml).join('') + '</div>' +
-            '<div class="lri-ft lri-ftx"><span>hfecloud.com</span><span>★ MVP of the winning team</span></div>' +
+            '<div class="lri-ft lri-ftx"><span>' + esc(siteName()) + '</span><span>★ MVP of the winning team</span></div>' +
             '</div>';
     }
 
@@ -219,7 +222,7 @@
         var tile = host.firstElementChild;
         function cleanup() { if (host.parentNode) host.parentNode.removeChild(host); }
         return Promise.all([fontsReady(), bgReady(spec.mode)])
-            .then(function () { return root.html2canvas(tile, { width: W, height: H, scale: 1, backgroundColor: '#12161f', useCORS: true, logging: false, scrollX: 0, scrollY: 0 }); })
+            .then(function () { return root.html2canvas(tile, { width: W, height: H, scale: 1, backgroundColor: '#0e1013', useCORS: true, logging: false, scrollX: 0, scrollY: 0 }); })
             .then(function (c) { cleanup(); return c; }, function (err) { cleanup(); throw err; });
     }
 
@@ -265,14 +268,14 @@
 
     // The PNG file name of a picture (shared with the Export matches dialog).
     function fileName(spec) {
-        if (spec && spec.kind === 'clash') return 'hfe-clash-' + spec.eventId + '-team-' + spec.teamId + '-progress.png';
+        if (spec && spec.kind === 'clash') return 'ltb-clash-' + spec.eventId + '-team-' + spec.teamId + '-progress.png';
         if (spec && spec.kind === 'session') {
             var nums = gameNumbers(spec);
             var run = nums.every(function (n, i) { return i === 0 || n === nums[i - 1] + 1; });
             var part = run ? nums[0] + '-' + nums[nums.length - 1] : nums.join('-');
-            return 'hfe-session-' + String(spec.date).toLowerCase().replace(/\s+/g, '-') + '-games-' + part + '.png';
+            return 'ltb-session-' + String(spec.date).toLowerCase().replace(/\s+/g, '-') + '-games-' + part + '.png';
         }
-        return 'hfe-game-' + (spec ? spec.matchId : 'result') + '-result.png';
+        return 'ltb-game-' + (spec ? spec.matchId : 'result') + '-result.png';
     }
 
     function canvasBlob(c) {

@@ -1,89 +1,60 @@
 /* =====================================================================
-   League pages, new design (PLAN-league-restyle.md, Step R1: foundation).
-   Everything is scoped under lg-* classes. Top-level hooks: .lg-page and
-   body:has(.lg-page). Nothing leaks to other pages.
+   League pages: shared components (Phase C, step C2).
+   Everything is scoped under lg-* classes (top-level hook: .lg-page). Nothing leaks to other pages.
 
-   Theme: the saved site theme comes from <body data-home-theme>, which
-   home-v2.css turns into --hv-* tokens on <body> (Gold, Crimson, Glitch).
-   Rules below use --hv-* directly. Radii use --lg-k (1, or 0 in Glitch).
+   Colours, radii, fonts, borders and tile look come ONLY from the --lh-* tokens (leaguehub-theme.css, leaguehub-looks.css).
+   No hard-coded colour lives in this file, so Steel, Brutal and Forest all work and a fourth look is one token block.
+     --lh-line  borders of tiles, inputs, buttons (off-white in Brutal)
+     --lh-rule  dividers, row lines, nested containers, slider tracks (soft in every look)
+     --lh-a / --lh-b  Side A / Side B (the two teams). --lh-gold is reserved for MVP.
+   Class names, ids and data-* hooks are unchanged: league-profile.js, league-settings.js and the other scripts hook onto them.
+   Breakpoints use the viewport (1100 / 900 / 560).
 
-   Bridge: league-builder.css, league-history.css and league-stats.css
-   (restyled in later steps) still read the old --hfe-* names. They are
-   mapped to the --hv-* tokens on .lg-page below, so those pages already
-   follow the theme. Remove the bridge when the last of them is rewritten.
-
-   Hooks kept on purpose: every lg-* class and data-lg-* attribute that
-   league-profile.js and league-settings.js use is unchanged.
-   R5 (Settings): section 11 at the end, plus the map pins (team 1 accent, team 2 ink, as in the Builder),
-   the tier rows and the map cards in section 8.
-   Breakpoints use the viewport (1100 / 900 / 560). The site rail narrows
-   the content area, so they are a little generous.
    ===================================================================== */
 
-/* ---------- 1. tokens and the old-name bridge ---------- */
+/* ---------- 1. derived values (not look-specific: they are computed from the tokens) ---------- */
 .lg-page {
-  --lg-k: 1;
-  --lg-danger: #ff7b72; --lg-ok: #58d68d; --lg-warn: #e6b84f;
-  /* accent for SMALL text: a little lighter than --hv-acc so it keeps 4.5:1 on the dark tiles in Crimson (R6) */
-  --lg-acc-t: color-mix(in srgb, var(--hv-acc) 80%, var(--hv-ink));
-  --hfe-ink: var(--hv-ink);
-  --hfe-muted: var(--hv-mut);
-  --hfe-border: var(--hv-line);
-  --hfe-surface: color-mix(in srgb, var(--hv-acc) 6%, var(--hv-bg2));
-  --hfe-surface-soft: color-mix(in srgb, var(--hv-acc) 9%, var(--hv-bg2));
-  --hfe-accent: var(--hv-acc);
-  --hfe-accent-fg: var(--hv-bg);
-  --hfe-accent-soft: color-mix(in srgb, var(--hv-acc) 20%, transparent);
-  --hfe-danger: var(--lg-danger);
-  --hfe-radius-sm: calc(12px * var(--lg-k));
-  --hfe-radius-md: calc(16px * var(--lg-k));
-  --hfe-font-display: var(--hv-disp);
+  /* accent for SMALL text: a little lighter than Side A so it keeps contrast on the tile in every look */
+  --lg-acc-t: color-mix(in srgb, var(--lh-a) 80%, var(--lh-ink));
+  /* a surface set into a tile (lanes, map cards, tier rows, notes): slightly darker than the tile */
+  --lg-inset: color-mix(in srgb, var(--lh-bg) 55%, var(--lh-tile));
+  /* round things (avatars, map pins, slider thumbs): a circle in rounded looks, square in Brutal */
+  --lg-round: min(50%, calc(var(--lh-r) * 4));
+  /* menus that float over the page */
+  --lg-float: 0 18px 40px color-mix(in srgb, black 55%, transparent);
 }
-body[data-home-theme="glitch"] .lg-page { --lg-k: 0; }
 
-/* ---------- 2. canvas, background layer, page shell ---------- */
-body:has(.lg-page) { background: var(--hv-bg); }
-/* glow + faint grid behind everything: fixed, no pointer events, never above text */
-body:has(.lg-page)::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(46vw 46vw at 2% -4%, var(--hv-glow), transparent 70%),
-    radial-gradient(34vw 34vw at 100% 100%, var(--hv-glow), transparent 70%);
-  opacity: .42; animation: lg-drift 30s ease-in-out infinite alternate; }
-body:has(.lg-page)::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .08;
-  background-image: linear-gradient(var(--hv-line) 1px, transparent 1px), linear-gradient(90deg, var(--hv-line) 1px, transparent 1px);
-  background-size: 64px 64px; }
-@keyframes lg-drift { to { transform: translate(3vw, 2vw) scale(1.06); } }
-
-.lg-page { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 38px 12px 120px;
-  color: var(--hv-ink); font: 400 14px/1.55 var(--hv-body); color-scheme: dark; }
+/* ---------- 2. page shell ---------- */
+.lg-page { position: relative; max-width: 1180px; margin: 0 auto; padding: 16px 0 96px;
+  color: var(--lh-ink); font: 400 14px/1.55 var(--lh-body); }
 .lg-page *, .lg-page *::before, .lg-page *::after { box-sizing: border-box; }
 .lg-page :where(a) { color: inherit; text-decoration: none; }
 .lg-page :where(a:not(.lg-btn, .lg-pill, .lg-tile):hover) { color: var(--lg-acc-t); }
 .lg-page :where(button, input, select, textarea) { font: inherit; color: inherit; }
 .lg-page :is(a, button, input, select, textarea, summary):focus-visible,
-.lg-page :is(.lg-rank-btn, .lg-champ-opt, .lg-tile):focus-visible { outline: 2px solid var(--hv-acc); outline-offset: 2px; }
-.lg-page input[type="checkbox"], .lg-page input[type="radio"] { accent-color: var(--hv-acc); }
+.lg-page :is(.lg-rank-btn, .lg-champ-opt, .lg-tile):focus-visible { outline: 2px solid var(--lh-ink); outline-offset: 2px; }
+.lg-page input[type="checkbox"], .lg-page input[type="radio"] { accent-color: var(--lh-a); }
 
-/* page header: eyebrow, then the Anton title with one accent word in <em> */
+/* page header: small label, then the title with one accent word in <em> */
 .lg-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-.lg-eyebrow { font: 700 11px var(--hv-body); letter-spacing: .16em; text-transform: uppercase; color: var(--hv-mut); }
-.lg-h1 { font: 400 clamp(36px, 5vw, 62px)/.95 var(--hv-disp); text-transform: uppercase; margin: 6px 0 14px; }
+.lg-eyebrow { font: 600 12px var(--lh-body); letter-spacing: .06em; color: var(--lh-mut); }
+.lg-h1 { font: var(--lh-dw) clamp(32px, 5vw, 56px)/1 var(--lh-disp); letter-spacing: .01em; margin: 6px 0 14px; }
 .lg-top .lg-h1 { margin-bottom: 0; }
-.lg-h1 em { font-style: normal; color: var(--hv-acc); }
-body[data-home-theme="glitch"] .lg-h1 { text-shadow: -2px 0 color-mix(in srgb, var(--hv-acc) 45%, transparent), 2px 0 rgba(255,255,255,.1); }
-.lg-h2 { font: 400 22px/1.1 var(--hv-disp); text-transform: uppercase; letter-spacing: .02em; margin: 0 0 12px; }
-.lg-sub { display: block; color: var(--hv-mut); font-size: 14px; margin: 6px 0 16px; max-width: 78ch; }
-.lg-opt { color: var(--hv-mut); font-weight: 400; text-transform: none; letter-spacing: 0; }
-.lg-muted { color: var(--hv-mut); }
+.lg-h1 em { font-style: normal; color: var(--lh-a); }
+.lg-h2 { font: var(--lh-dw) 22px/1.15 var(--lh-disp); letter-spacing: .01em; margin: 0 0 12px; }
+.lg-hint { display: block; color: var(--lh-mut); font-size: 13px; margin: 6px 0 0; }
+.lg-sub { display: block; color: var(--lh-mut); font-size: 14px; margin: 6px 0 16px; max-width: 78ch; }
+.lg-opt { color: var(--lh-mut); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.lg-muted { color: var(--lh-mut); }
 .lg-block { display: block; }
 
-/* sub-nav: a pill container, the current page is accent-filled */
-.lg-nav { display: flex; gap: 6px; flex-wrap: wrap; padding: 5px; border: 1px solid var(--hv-line); border-radius: calc(40px * var(--lg-k));
-  background: var(--hv-card); margin: 0 0 20px; width: max-content; max-width: 100%; overflow-x: auto; }
-.lg-pill { padding: 7px 16px; border: 0; border-radius: calc(30px * var(--lg-k)); background: transparent; color: var(--hv-mut);
-  font: 700 12px var(--hv-body); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
-.lg-pill:hover { color: var(--hv-ink); }
-.lg-pill[aria-current="page"] { background: var(--hv-acc); color: var(--hv-bg); }
+/* sub-nav (_LeagueNav): a bar, the current page is filled with Side A */
+.lg-nav { display: flex; gap: 4px; flex-wrap: wrap; padding: 4px; border: var(--lh-tb); border-radius: var(--lh-r);
+  background: var(--lh-tile); margin: 0 0 20px; width: max-content; max-width: 100%; overflow-x: auto; }
+.lg-pill { padding: 7px 16px; border: 0; border-radius: var(--lh-rs); background: transparent; color: var(--lh-mut);
+  font: 700 13px var(--lh-body); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.lg-pill:hover { color: var(--lh-ink); }
+.lg-pill[aria-current="page"] { background: var(--lh-a); color: var(--lh-bg); }
 
 /* ---------- 3. grid and tiles ---------- */
 .lg-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; align-items: start; }
@@ -93,106 +64,107 @@ body[data-home-theme="glitch"] .lg-h1 { text-shadow: -2px 0 color-mix(in srgb, v
 @media (max-width: 1100px) { .lg-c8, .lg-c7, .lg-c5, .lg-c4 { grid-column: span 12; } }
 @media (max-width: 900px) { .lg-c6, .lg-c3 { grid-column: span 12; } }
 
-.lg-card { min-width: 0; margin: 0 0 14px; padding: 22px; border: 1px solid var(--hv-line); border-radius: calc(20px * var(--lg-k));
-  background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.015));
-  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+/* the tile: background, border, left edge, corner radius and shadow all come from the look */
+.lg-card { min-width: 0; margin: 0 0 14px; padding: 22px; border: var(--lh-tb); border-left: var(--lh-tbl);
+  border-radius: var(--lh-r); background: var(--lh-tile); box-shadow: var(--lh-tsh); }
 .lg-grid > .lg-card, .lg-stack > .lg-card { margin: 0; }
 .lg-th { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .lg-th .lg-h2 { margin: 0; }
-.lg-empty { border: 1px dashed var(--hv-line); border-radius: calc(14px * var(--lg-k)); padding: 28px 18px; text-align: center; color: var(--hv-mut); }
+.lg-empty { border: 1px dashed var(--lh-line); border-radius: var(--lh-r); padding: 28px 18px; text-align: center; color: var(--lh-mut); }
 .lg-copy { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
 .lg-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; }
 .lg-grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .lg-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
 .lg-tile { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 20px; color: inherit;
-  border: 1px solid var(--hv-line); border-radius: calc(20px * var(--lg-k)); background: var(--hv-card); transition: .2s; }
-a.lg-tile:hover { border-color: var(--hv-acc); transform: translateY(-3px); }
-.lg-tile strong { font: 400 20px/1.1 var(--hv-disp); text-transform: uppercase; letter-spacing: .02em; }
-.lg-tile span { color: var(--hv-mut); font-size: 13px; }
+  border: var(--lh-tb); border-left: var(--lh-tbl); border-radius: var(--lh-r); background: var(--lh-tile); box-shadow: var(--lh-tsh); transition: .2s; }
+a.lg-tile:hover { border-color: var(--lh-a); transform: translateY(-2px); }
+.lg-tile strong { font: var(--lh-dw) 19px/1.15 var(--lh-disp); letter-spacing: .01em; }
+.lg-tile span { color: var(--lh-mut); font-size: 13px; }
 .lg-ranks { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
-.lg-ranks figure { margin: 0; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--hv-mut); }
+.lg-ranks figure { margin: 0; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--lh-mut); }
 .lg-ranks img { display: block; margin: 0 auto 6px; }
 
-/* ---------- 4. forms ---------- */
+/* ---------- 4. forms, banners, buttons ---------- */
 .lg-field { margin: 0 0 16px; }
-.lg-lbl { display: block; font: 700 11px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-mut); margin: 0 0 5px; }
-.lg-input, .lg-select { width: 100%; padding: 10px 13px; border: 1px solid var(--hv-line); border-radius: calc(12px * var(--lg-k));
-  background: var(--hv-card); color: var(--hv-ink); font: 500 14px var(--hv-body); }
-.lg-input:focus, .lg-select:focus { border-color: var(--hv-acc); }
-.lg-input::placeholder { color: color-mix(in srgb, var(--hv-mut) 70%, transparent); }
-.lg-select option { background: var(--hv-bg2); color: var(--hv-ink); }
-.lg-field-err { color: var(--lg-danger); font-size: 12px; margin: 5px 0 0; }
+.lg-lbl { display: block; font: 600 12px var(--lh-body); letter-spacing: .04em; color: var(--lh-mut); margin: 0 0 5px; }
+.lg-input, .lg-select { width: 100%; padding: 10px 13px; border: var(--lh-tb); border-radius: var(--lh-rs);
+  background: var(--lh-bg); color: var(--lh-ink); font: 500 14px var(--lh-body); }
+.lg-input:focus, .lg-select:focus { border-color: var(--lh-a); }
+.lg-input::placeholder { color: color-mix(in srgb, var(--lh-mut) 70%, transparent); }
+.lg-select option { background: var(--lh-bg2); color: var(--lh-ink); }
+.lg-field-err { color: var(--lh-b); font-size: 12px; margin: 5px 0 0; }
 .lg-check { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; margin: 0 14px 6px 0; cursor: pointer; }
-.lg-ok-text { color: var(--lg-ok); font-size: 13px; display: block; margin-top: 6px; }
+.lg-ok-text { color: var(--lh-ok); font-size: 13px; display: block; margin-top: 6px; }
 
+/* banners: a tile with a coloured left edge. .lg-ok = done, .lg-err = went wrong (Side B colour, as in the shell) */
 .lg-alert { display: flex; align-items: center; gap: 12px; padding: 11px 16px; margin: 0 0 14px; font-size: 14px;
-  border: 1px solid var(--hv-line); border-left: 4px solid var(--lg-ok); border-radius: calc(14px * var(--lg-k)); background: rgba(88,214,141,.08); }
-.lg-ok { border-left-color: var(--lg-ok); background: rgba(88,214,141,.08); }
-.lg-err { border-left-color: var(--lg-danger); background: rgba(255,123,114,.08); }
+  border: var(--lh-tb); border-left: 4px solid var(--lh-ok); border-radius: var(--lh-r);
+  background: color-mix(in srgb, var(--lh-ok) 10%, var(--lh-tile)); }
+.lg-ok { border-left-color: var(--lh-ok); background: color-mix(in srgb, var(--lh-ok) 10%, var(--lh-tile)); }
+.lg-err { border-left-color: var(--lh-b); background: color-mix(in srgb, var(--lh-b) 12%, var(--lh-tile)); }
 
-/* buttons: the default is the primary (accent) pill, ghost is outlined, danger turns red on hover */
+/* buttons: the default is primary (Side A fill), ghost is outlined, danger turns Side B on hover */
 .lg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 18px; min-height: 36px;
-  border: 1px solid var(--hv-acc); border-radius: calc(30px * var(--lg-k)); background: var(--hv-acc); color: var(--hv-bg);
-  font: 700 12px var(--hv-body); cursor: pointer; text-decoration: none; transition: .2s; white-space: nowrap; }
+  border: var(--lh-tb); border-color: var(--lh-a); border-radius: var(--lh-rs); background: var(--lh-a); color: var(--lh-bg);
+  font: 700 13px var(--lh-body); cursor: pointer; text-decoration: none; transition: .2s; white-space: nowrap; }
 .lg-btn:hover { opacity: .9; }
-.lg-btn-ghost { background: transparent; color: var(--hv-ink); border-color: var(--hv-line); }
-.lg-btn-ghost:hover { opacity: 1; border-color: var(--hv-acc); color: var(--lg-acc-t); }
-.lg-btn-danger { background: transparent; color: var(--hv-ink); border-color: var(--hv-line); }
-.lg-btn-danger:hover { opacity: 1; border-color: var(--lg-danger); color: var(--lg-danger); }
+.lg-btn-ghost { background: transparent; color: var(--lh-ink); border-color: var(--lh-line); }
+.lg-btn-ghost:hover { opacity: 1; border-color: var(--lh-a); color: var(--lg-acc-t); }
+.lg-btn-danger { background: transparent; color: var(--lh-ink); border-color: var(--lh-line); }
+.lg-btn-danger:hover { opacity: 1; border-color: var(--lh-b); color: var(--lh-b); }
 .lg-btn[disabled], .lg-btn[aria-disabled="true"] { opacity: .4; pointer-events: none; }
 .lg-savebar { display: flex; justify-content: flex-end; }
 
 .lg-avatar-row { display: flex; gap: 14px; align-items: center; }
-.lg-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--hv-card); border: 1px solid var(--hv-line);
-  display: inline-flex; align-items: center; justify-content: center; font: 400 24px var(--hv-disp); color: var(--hv-acc); }
-body[data-home-theme="glitch"] .lg-avatar { border-radius: 0; }
+.lg-avatar { width: 64px; height: 64px; border-radius: var(--lg-round); object-fit: cover; background: var(--lg-inset); border: var(--lh-tb);
+  display: inline-flex; align-items: center; justify-content: center; font: var(--lh-dw) 24px var(--lh-disp); color: var(--lh-a); }
 
 /* ---------- 5. rank select (league-profile.js adds the button + listbox) ---------- */
 .lg-rank-row { display: flex; gap: 8px; align-items: stretch; }
 .lg-rank-row .lg-div { width: 72px; flex: none; }
 .lg-rank-row .lg-div[disabled] { opacity: .4; }
 .lg-rank { position: relative; }
-.lg-rank-btn { flex: 1; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--hv-line);
-  border-radius: calc(12px * var(--lg-k)); background: var(--hv-card); color: var(--hv-ink); font: 500 14px var(--hv-body); cursor: pointer; text-align: left; }
-.lg-rank-btn:hover { border-color: var(--hv-acc); }
+.lg-rank-btn { flex: 1; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border: var(--lh-tb);
+  border-radius: var(--lh-rs); background: var(--lh-bg); color: var(--lh-ink); font: 500 14px var(--lh-body); cursor: pointer; text-align: left; }
+.lg-rank-btn:hover { border-color: var(--lh-a); }
 .lg-rank-btn img, .lg-rank-opt img { height: 28px; width: auto; }
 .lg-rank-list { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none; max-height: 320px; overflow: auto;
-  background: var(--hfe-surface); border: 1px solid var(--hv-line); border-radius: calc(12px * var(--lg-k)); box-shadow: 0 18px 40px rgba(0,0,0,.55); }
-.lg-rank-opt { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: calc(8px * var(--lg-k)); cursor: pointer; }
+  background: var(--lh-tile); border: var(--lh-tb); border-radius: var(--lh-rs); box-shadow: var(--lg-float); }
+.lg-rank-opt { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--lh-rs); cursor: pointer; }
 .lg-rank-opt[aria-selected="true"] { font-weight: 700; color: var(--lg-acc-t); }
-.lg-rank-opt.is-active { background: var(--hfe-accent-soft); }
+.lg-rank-opt.is-active { background: color-mix(in srgb, var(--lh-a) 20%, transparent); }
 
 /* ---------- 6. lanes and champion picker ---------- */
-.lg-lane { border: 1px solid var(--hv-line); border-radius: calc(14px * var(--lg-k)); padding: 12px 14px 14px; margin: 0 0 12px; background: var(--hv-card); min-width: 0; }
-.lg-lane legend { font: 700 11px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-mut); padding: 0 6px; width: auto; float: none; margin: 0; }
+.lg-lane { border: 1px solid var(--lh-rule); border-radius: var(--lh-rs); padding: 12px 14px 14px; margin: 0 0 12px; background: var(--lg-inset); min-width: 0; }
+.lg-lane legend { font: 600 12px var(--lh-body); letter-spacing: .04em; color: var(--lh-mut); padding: 0 6px; width: auto; float: none; margin: 0; }
 .lg-lane-head { margin-bottom: 8px; }
 .lg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .lg-chips:empty { display: none; }
-.lg-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 11px; border: 1px solid var(--hv-line);
-  border-radius: calc(20px * var(--lg-k)); background: var(--hfe-accent-soft); font-size: 13px; }
+.lg-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 11px; border: 1px solid var(--lh-rule);
+  border-radius: var(--lh-rs); background: color-mix(in srgb, var(--lh-a) 20%, transparent); font-size: 13px; }
 .lg-chip.is-retired { opacity: .6; font-style: italic; }
-.lg-chip-x { border: 0; background: transparent; color: var(--hv-mut); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 7px; min-height: 24px; }
-.lg-chip-x:hover { color: var(--lg-danger); }
+.lg-chip-x { border: 0; background: transparent; color: var(--lh-mut); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 7px; min-height: 24px; }
+.lg-chip-x:hover { color: var(--lh-b); }
 .lg-champ-search { position: relative; }
 .lg-champ-list { position: absolute; z-index: 25; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none; max-height: 240px; overflow: auto;
-  background: var(--hfe-surface); border: 1px solid var(--hv-line); border-radius: calc(12px * var(--lg-k)); box-shadow: 0 18px 40px rgba(0,0,0,.55); }
-.lg-champ-opt { padding: 7px 10px; border-radius: calc(8px * var(--lg-k)); cursor: pointer; }
-.lg-champ-opt.is-active { background: var(--hfe-accent-soft); }
-.lg-champ-empty { padding: 7px 10px; color: var(--hv-mut); font-size: 13px; }
+  background: var(--lh-tile); border: var(--lh-tb); border-radius: var(--lh-rs); box-shadow: var(--lg-float); }
+.lg-champ-opt { padding: 7px 10px; border-radius: var(--lh-rs); cursor: pointer; }
+.lg-champ-opt.is-active { background: color-mix(in srgb, var(--lh-a) 20%, transparent); }
+.lg-champ-empty { padding: 7px 10px; color: var(--lh-mut); font-size: 13px; }
 
 /* ---------- 7. tables (Champions, Guests, Tiers) ---------- */
 .lg-search { display: flex; gap: 8px; align-items: end; margin: 0 0 10px; flex-wrap: wrap; }
 .lg-search .lg-input { max-width: 280px; }
 .lg-table-wrap { overflow-x: auto; }
 .lg-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.lg-table th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--hv-line); font: 700 11px var(--hv-body); letter-spacing: .14em; text-transform: uppercase; color: var(--hv-mut); }
-.lg-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid color-mix(in srgb, var(--hv-line) 55%, transparent); vertical-align: middle; }
-.lg-table tbody tr:hover td { background: var(--hv-card); }
+.lg-table th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--lh-rule); font: 600 12px var(--lh-body); letter-spacing: .04em; color: var(--lh-mut); }
+.lg-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lh-rule); vertical-align: middle; }
+.lg-table tbody tr:hover td { background: color-mix(in srgb, var(--lh-a) 7%, transparent); }
 .lg-inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; }
 .lg-actions { white-space: nowrap; }
 
 /* ---------- 8. settings pages ---------- */
-.lg-back { margin: 0 0 14px; font-size: 13px; font-weight: 700; color: var(--hv-mut); }
+.lg-back { margin: 0 0 14px; font-size: 13px; font-weight: 700; color: var(--lh-mut); }
 .lg-back a { color: inherit; }
 .lg-grow { flex: 1; min-width: 0; }
 .lg-gap { gap: 8px; align-items: center; }
@@ -203,31 +175,32 @@ body[data-home-theme="glitch"] .lg-avatar { border-radius: 0; }
 .lg-inline-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
 .lg-inline-form .lg-field { margin: 0; flex: 1; min-width: 200px; }
 
-.lg-mapcard { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 14px; border: 1px solid var(--hv-line); border-radius: calc(16px * var(--lg-k)); background: var(--hv-card); }
-.lg-mapcard > strong { font: 400 18px/1.1 var(--hv-disp); letter-spacing: .02em; text-transform: uppercase; }
+.lg-mapcard { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 14px; border: 1px solid var(--lh-rule); border-radius: var(--lh-r); background: var(--lg-inset); }
+.lg-mapcard > strong { font: var(--lh-dw) 17px/1.15 var(--lh-disp); letter-spacing: .01em; }
 .lg-mapform { display: grid; gap: 6px; }
-.lg-thumb { width: 100%; border-radius: calc(12px * var(--lg-k)); border: 1px solid var(--hv-line); background-size: cover; background-position: center; background-color: var(--hv-card); }
-.lg-thumb-empty { display: flex; align-items: center; justify-content: center; color: var(--hv-mut); font-size: 13px; }
+/* B3: badge preview on the Badges page; a very wide or tall upload stays inside its card. */
+.lg-bprev { display: block; height: 64px; width: auto; max-width: 100%; object-fit: contain; }
+.lg-thumb { width: 100%; border-radius: var(--lh-rs); border: 1px solid var(--lh-rule); background-size: cover; background-position: center; background-color: var(--lh-bg); }
+.lg-thumb-empty { display: flex; align-items: center; justify-content: center; color: var(--lh-mut); font-size: 13px; }
 
-.lg-tierrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; padding: 8px 10px; border: 1px solid var(--hv-line); border-radius: calc(14px * var(--lg-k)); background: var(--hv-card); }
-.lg-tiernum { width: 30px; flex: none; font: 400 22px var(--hv-disp); color: var(--lg-acc-t); text-align: center; }
+.lg-tierrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; padding: 8px 10px; border: 1px solid var(--lh-rule); border-radius: var(--lh-rs); background: var(--lg-inset); }
+.lg-tiernum { width: 30px; flex: none; font: var(--lh-dw) 22px var(--lh-disp); color: var(--lg-acc-t); text-align: center; }
 .lg-ib { padding: 6px 10px; min-width: 36px; }
 .lg-ib[disabled] { opacity: .35; cursor: default; }
 
-/* map spot editor (league-settings.js) */
-.lg-map { position: relative; margin: 0 auto 12px; border: 1px solid var(--hv-line); border-radius: calc(12px * var(--lg-k)); background-size: cover; background-position: center;
-  background-color: var(--hv-card); overflow: hidden; touch-action: manipulation; cursor: crosshair; }
-.lg-map-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--hv-mut); font-size: 14px; pointer-events: none; }
-.lg-pin { position: absolute; transform: translate(-50%, -50%); width: 46px; height: 46px; padding: 0; border-radius: 50%; border: 2px solid var(--hv-acc); background: rgba(8,8,8,.78); color: #fff;
-  font: 700 10px/1.05 var(--hv-body); white-space: pre; text-align: center; cursor: grab; touch-action: none; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
-.lg-pin.t0 { border-color: var(--hv-acc); }
-.lg-pin.t1 { border-color: var(--hv-ink); }
-body[data-home-theme="glitch"] .lg-pin { border-radius: 0; }
-.lg-pin:focus-visible { outline: 3px solid var(--hv-acc); outline-offset: 2px; }
+/* map spot editor (league-settings.js): pins are Side A (team 1) and Side B (team 2) */
+.lg-map { position: relative; margin: 0 auto 12px; border: var(--lh-tb); border-radius: var(--lh-rs); background-size: cover; background-position: center;
+  background-color: var(--lh-bg); overflow: hidden; touch-action: manipulation; cursor: crosshair; }
+.lg-map-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--lh-mut); font-size: 14px; pointer-events: none; }
+.lg-pin { position: absolute; transform: translate(-50%, -50%); width: 46px; height: 46px; padding: 0; border-radius: var(--lg-round); border: 2px solid var(--lh-a);
+  background: color-mix(in srgb, var(--lh-bg) 85%, transparent); color: var(--lh-ink);
+  font: 700 10px/1.05 var(--lh-body); white-space: pre; text-align: center; cursor: grab; touch-action: none; box-shadow: 0 2px 8px color-mix(in srgb, black 50%, transparent); }
+.lg-pin.t0 { border-color: var(--lh-a); }
+.lg-pin.t1 { border-color: var(--lh-b); }
+.lg-pin:focus-visible { outline: 3px solid var(--lh-ink); outline-offset: 2px; }
 
 /* ---------- 9. motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  body:has(.lg-page)::before { animation: none; }
   .lg-page *, .lg-page *::before, .lg-page *::after { transition: none !important; }
   a.lg-tile:hover { transform: none; }
 }
@@ -235,9 +208,8 @@ body[data-home-theme="glitch"] .lg-pin { border-radius: 0; }
 /* helpers */
 .lg-flush { margin: 0; max-width: none; }
 
-/* ---------- 10. profile page (Step R2) ---------- */
-/* a tile that holds an open dropdown (rank list, champion list) rises above the tiles after it:
-   every tile has backdrop-filter, which makes it its own stacking context */
+/* ---------- 10. profile page ---------- */
+/* a tile that holds an open dropdown (rank list, champion list) rises above the tiles after it */
 .lg-card:focus-within { position: relative; z-index: 5; }
 .lg-flush-h { margin: 0 0 4px; }
 .lg-savebar.lg-c7, .lg-savebar.lg-c12 { align-self: end; }
@@ -245,26 +217,26 @@ body[data-home-theme="glitch"] .lg-pin { border-radius: 0; }
 .lg-lanes .lg-lane { margin: 0; }
 .lg-lane-head { display: flex; flex-wrap: wrap; gap: 8px; }
 /* lane toggles as chips: the real checkbox / radio stays (visually hidden), a check mark shows when it is on */
-:is(.lg-lane-head, .lg-lanechips) .lg-check { position: relative; margin: 0; padding: 6px 14px; min-height: 34px; border: 1px solid var(--hv-line);
-  border-radius: calc(30px * var(--lg-k)); background: var(--hv-card); font: 700 12px var(--hv-body); transition: .2s; }
+:is(.lg-lane-head, .lg-lanechips) .lg-check { position: relative; margin: 0; padding: 6px 14px; min-height: 34px; border: 1px solid var(--lh-line);
+  border-radius: var(--lh-rs); background: var(--lh-bg); font: 700 13px var(--lh-body); transition: .2s; }
 :is(.lg-lane-head, .lg-lanechips) .lg-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-:is(.lg-lane-head, .lg-lanechips) .lg-check:hover { border-color: var(--hv-acc); }
-:is(.lg-lane-head, .lg-lanechips) .lg-check:has(input:checked) { background: var(--hv-acc); border-color: var(--hv-acc); color: var(--hv-bg); }
+:is(.lg-lane-head, .lg-lanechips) .lg-check:hover { border-color: var(--lh-a); }
+:is(.lg-lane-head, .lg-lanechips) .lg-check:has(input:checked) { background: var(--lh-a); border-color: var(--lh-a); color: var(--lh-bg); }
 :is(.lg-lane-head, .lg-lanechips) .lg-check:has(input:checked)::before { content: "\2713"; }
 :is(.lg-lane-head, .lg-lanechips) .lg-check:has(input:disabled) { opacity: .4; cursor: default; }
-:is(.lg-lane-head, .lg-lanechips) .lg-check:has(input:focus-visible) { outline: 2px solid var(--hv-acc); outline-offset: 2px; }
+:is(.lg-lane-head, .lg-lanechips) .lg-check:has(input:focus-visible) { outline: 2px solid var(--lh-ink); outline-offset: 2px; }
 .lg-lane-champs { margin-top: 10px; }
-/* file input: pill button like the other buttons */
-.lg-file { max-width: 100%; font-size: 13px; color: var(--hv-mut); }
-.lg-file::file-selector-button { margin-right: 10px; padding: 7px 14px; border: 1px solid var(--hv-line); border-radius: calc(30px * var(--lg-k));
-  background: transparent; color: var(--hv-ink); font: 700 12px var(--hv-body); cursor: pointer; transition: .2s; }
-.lg-file::file-selector-button:hover { border-color: var(--hv-acc); color: var(--lg-acc-t); }
+/* file input: a button like the other buttons */
+.lg-file { max-width: 100%; font-size: 13px; color: var(--lh-mut); }
+.lg-file::file-selector-button { margin-right: 10px; padding: 7px 14px; border: 1px solid var(--lh-line); border-radius: var(--lh-rs);
+  background: transparent; color: var(--lh-ink); font: 700 13px var(--lh-body); cursor: pointer; transition: .2s; }
+.lg-file::file-selector-button:hover { border-color: var(--lh-a); color: var(--lg-acc-t); }
 .lg-avatar-row > div { min-width: 0; display: grid; gap: 6px; }
 
-/* ---------- 11. settings pages (Step R5) ---------- */
+/* ---------- 11. settings pages ---------- */
 /* Overview tiles get an arrow */
 a.lg-tile { position: relative; padding-right: 48px; }
-a.lg-tile::after { content: "\2192"; position: absolute; right: 20px; top: 18px; font: 700 18px var(--hv-body); color: var(--lg-acc-t); transition: .2s; }
+a.lg-tile::after { content: "\2192"; position: absolute; right: 20px; top: 18px; font: 700 18px var(--lh-body); color: var(--lg-acc-t); transition: .2s; }
 a.lg-tile:hover::after { transform: translateX(3px); }
 
 /* buttons that sit under an input inside a card (Champions: add one, bulk add) */
@@ -276,11 +248,11 @@ a.lg-tile:hover::after { transform: translateX(3px); }
 .lg-table .lg-inline .lg-input { min-width: 180px; }
 .lg-search .lg-lbl { margin: 0; align-self: center; }
 
-/* status pill (Champions: Active / Disabled). Same look as the other status pills; text always shown. */
-.lg-status { display: inline-flex; align-items: center; gap: 7px; padding: 1px 11px; border: 1px solid var(--hv-line); border-radius: calc(30px * var(--lg-k));
-  color: var(--hv-mut); font: 700 11px/1.7 var(--hv-body); letter-spacing: .06em; white-space: nowrap; }
+/* status pill (Champions: Active / Disabled). Text is always shown, the dot is extra. */
+.lg-status { display: inline-flex; align-items: center; gap: 7px; padding: 1px 11px; border: 1px solid var(--lh-rule); border-radius: var(--lh-rs);
+  color: var(--lh-mut); font: 700 12px/1.7 var(--lh-body); letter-spacing: .02em; white-space: nowrap; }
 .lg-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.lg-status.is-on { color: var(--lg-ok); border-color: rgba(88,214,141,.45); }
+.lg-status.is-on { color: var(--lh-ok); border-color: color-mix(in srgb, var(--lh-ok) 45%, transparent); }
 
 /* guest add / edit form: fields in two columns, the lane chips and the rank row use the full width */
 .lg-fieldgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 0 20px; align-items: start; }
@@ -309,34 +281,34 @@ a.lg-tile:hover::after { transform: translateX(3px); }
 }
 @media (prefers-reduced-motion: reduce) { a.lg-tile:hover::after { transform: none; } }
 
-/* ---------- 12. lane level sliders (Step 8f; from the mockup's .sl and input[type=range]) ---------- */
+/* ---------- 12. lane level sliders ---------- */
 .lg-fieldgrid > .lg-lanelevels { grid-column: 1 / -1; }
-.lg-sl { display: grid; grid-template-columns: 96px minmax(0, 1fr) 100px; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--hv-line); }
+.lg-sl { display: grid; grid-template-columns: 96px minmax(0, 1fr) 100px; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--lh-rule); }
 .lg-sliders > .lg-sl:first-child { border-top: 0; }
-.lg-sl-nm { margin: 0; font: 400 20px var(--hv-disp); text-transform: uppercase; }
+.lg-sl-nm { margin: 0; font: var(--lh-dw) 19px var(--lh-disp); }
 .lg-sl-out { font-weight: 700; font-size: 12px; color: var(--lg-acc-t); text-align: right; }
 .lg-range { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; }
-.lg-range::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: linear-gradient(to right, var(--hv-acc) var(--p), var(--hv-line) var(--p)); }
-.lg-range::-moz-range-track { height: 6px; border-radius: 6px; background: var(--hv-line); }
-.lg-range::-moz-range-progress { height: 6px; border-radius: 6px; background: var(--hv-acc); }
-.lg-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: calc(50% * var(--lg-k)); background: var(--hv-ink); border: 3px solid var(--hv-acc); }
-.lg-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: calc(50% * var(--lg-k)); background: var(--hv-ink); border: 3px solid var(--hv-acc); }
-.lg-range:focus-visible { outline: 2px solid var(--hv-acc); outline-offset: 2px; }
-.lg-ticks { display: flex; justify-content: space-between; padding: 0 4px; margin-top: -4px; font-size: 10px; color: var(--hv-mut); }
-.lg-sl-note { margin: 12px 0 0; padding: 10px 14px; border-left: 3px solid var(--hv-acc); background: var(--hv-card);
-  border-radius: 0 calc(12px * var(--lg-k)) calc(12px * var(--lg-k)) 0; font-size: 12px; color: var(--hv-mut); }
+.lg-range::-webkit-slider-runnable-track { height: 6px; border-radius: var(--lh-rs); background: linear-gradient(to right, var(--lh-a) var(--p), var(--lh-rule) var(--p)); }
+.lg-range::-moz-range-track { height: 6px; border-radius: var(--lh-rs); background: var(--lh-rule); }
+.lg-range::-moz-range-progress { height: 6px; border-radius: var(--lh-rs); background: var(--lh-a); }
+.lg-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: var(--lg-round); background: var(--lh-ink); border: 3px solid var(--lh-a); }
+.lg-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: var(--lg-round); background: var(--lh-ink); border: 3px solid var(--lh-a); }
+.lg-range:focus-visible { outline: 2px solid var(--lh-ink); outline-offset: 2px; }
+.lg-ticks { display: flex; justify-content: space-between; padding: 0 4px; margin-top: -4px; font-size: 11px; color: var(--lh-mut); }
+.lg-sl-note { margin: 12px 0 0; padding: 10px 14px; border-left: 3px solid var(--lh-a); background: var(--lg-inset);
+  border-radius: 0 var(--lh-rs) var(--lh-rs) 0; font-size: 12px; color: var(--lh-mut); }
 @media (max-width: 560px) {
   .lg-sl { grid-template-columns: 74px minmax(0, 1fr) 70px; }
-  .lg-sl-nm { font-size: 17px; }
+  .lg-sl-nm { font-size: 16px; }
 }
 
-/* ---------- 13. badges (Step 8g; mockup .bd, .bd--rank, .bd--mvp, .bd--icon) ---------- */
-/* .lg-bd itself is also in league-overview.css (same values); repeated here because the builder pages do not load that file */
-.lg-bd { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 6px; border-radius: calc(20px * var(--lg-k));
-  font: 700 10px var(--hv-body); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
+/* ---------- 13. badges ---------- */
+/* .lg-bd itself is also in league-overview.css (same values); repeated here because the builder pages do not load that file.
+   MVP is the only gold. A rank badge is neutral, the Clash badge is Side A. */
+.lg-bd { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 6px; border-radius: var(--lh-rs);
+  font: 700 11px var(--lh-body); letter-spacing: .04em; white-space: nowrap; vertical-align: middle; }
 .lg-bd svg { width: 13px; height: 13px; flex: none; }
-.lg-bd-rank { background: linear-gradient(135deg, #f6dc8b, #c8962b); color: #2b1e08; }
-.lg-bd-mvp { background: linear-gradient(135deg, #a98bff, #5c3fd1); color: #fff; }
-.lg-bd-clash { background: linear-gradient(135deg, #7fe8de, #1f9d93); color: #06302c; }
+.lg-bd-rank { background: color-mix(in srgb, var(--lh-ink) 14%, var(--lh-tile)); color: var(--lh-ink); border: 1px solid var(--lh-rule); }
+.lg-bd-mvp { background: var(--lh-gold); color: var(--lh-bg); }
+.lg-bd-clash { background: var(--lh-a); color: var(--lh-bg); }
 .lg-bd-icon { padding: 3px; margin-left: 6px; }
-

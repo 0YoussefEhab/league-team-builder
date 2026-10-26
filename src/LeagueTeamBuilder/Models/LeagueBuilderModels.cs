@@ -47,7 +47,7 @@ namespace LeagueTeamBuilder.Models
         // Display only: "Gold II", "Master".
         public string CurLabel { get; set; } = "";
         public string PeakLabel { get; set; } = "";
-        // Badge file name without extension, e.g. "gold" (wwwroot/img/ranks/gold.png).
+        // Badge file name without extension, e.g. "gold" (the picture address comes from RankBadgeCatalog.ByKey()).
         public string CurKey { get; set; } = "";
         public string PeakKey { get; set; } = "";
         // Lane indexes in priority order; Main is the first.

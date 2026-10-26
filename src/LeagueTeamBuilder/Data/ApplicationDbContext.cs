@@ -27,6 +27,7 @@ namespace LeagueTeamBuilder
         public DbSet<LeagueClashEvent> LeagueClashEvents => Set<LeagueClashEvent>();
         public DbSet<LeagueClashTeam> LeagueClashTeams => Set<LeagueClashTeam>();
         public DbSet<LeagueClashResponse> LeagueClashResponses => Set<LeagueClashResponse>();
+        public DbSet<LeagueRankBadge> LeagueRankBadges => Set<LeagueRankBadge>();
         public DbSet<LeagueAutoSendSettings> LeagueAutoSendSettings => Set<LeagueAutoSendSettings>();
         public DbSet<LeagueGuestLinkLog> LeagueGuestLinkLogs => Set<LeagueGuestLinkLog>();
 
@@ -85,6 +86,13 @@ namespace LeagueTeamBuilder
             {
                 e.HasKey(s => new { s.Mode, s.Team, s.Slot });
                 e.HasOne(s => s.Settings).WithMany(m => m.Spots).HasForeignKey(s => s.Mode).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            b.Entity<LeagueRankBadge>(e =>
+            {
+                e.HasKey(x => x.Tier);
+                e.Property(x => x.Tier).ValueGeneratedNever();
+                e.Property(x => x.ImageUrl).HasMaxLength(300);
             });
 
             b.Entity<LeagueAutoSendSettings>(e =>

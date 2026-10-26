@@ -116,6 +116,8 @@ namespace LeagueTeamBuilder.Services
             var stats = model.Stats;
             stats.Customs = counts.Customs; stats.Draft = counts.Draft; stats.Aram = counts.Aram; stats.Arena = counts.Arena;
             stats.ClashGames = counts.ClashGames;
+            var sides = LeagueOverviewStats.SideWins(done);
+            stats.SideAWins = sides.SideA; stats.SideBWins = sides.SideB;
             stats.Clashes = doneEvents.Count;
             stats.ClashesWon = LeagueOverviewStats.ClashesWon(doneEvents, records);
             stats.Players = profiles.Count;

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Phase B4 (and the start of A7). Lives NEXT TO the web project, not inside it: the web project compiles every .cs file under its own folder.
+    Expected layout:  src/LeagueTeamBuilder/  and  tests/LeagueTeamBuilder.Tests/  (the path below assumes that).
+    Package versions are my best choice (no SDK here to restore); if restore complains, paste the message.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\LeagueTeamBuilder\LeagueTeamBuilder.csproj" />
+  </ItemGroup>
+
+</Project>

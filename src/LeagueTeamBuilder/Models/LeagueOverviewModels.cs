@@ -70,6 +70,11 @@ namespace LeagueTeamBuilder.Models
         public int ClashGames { get; set; }
         public int ClashesWon { get; set; }
 
+        // Balance scoreboard (C3): finished custom Draft and ARAM games (two sides) won by Side A (Team 1) and Side B (Team 2).
+        // Arena (many teams) and Clash (our team vs an opponent) are not part of it. Both 0 = the page hides the scoreboard.
+        public int SideAWins { get; set; }
+        public int SideBWins { get; set; }
+
         // Fun facts. Null = nothing to show yet (the page hides that tile).
         public int Players { get; set; }
         public int Members { get; set; }

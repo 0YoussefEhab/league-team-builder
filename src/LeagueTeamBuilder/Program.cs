@@ -48,6 +48,9 @@ builder.Services.AddScoped<IPermissionChecker, RolePermissionChecker>();
 builder.Services.AddScoped<ILeagueNotifier, LeagueNotifier>();
 builder.Services.AddScoped<IActivityLog, ActivityLog>();
 
+// The look picker: which of the League looks (Steel, Brutal, Forest) this request gets. See Services/LeagueLooks.cs.
+builder.Services.AddScoped<LookResolver>();
+
 // ---- League services (scoped: each one works on the request's database context) ------------------------------------
 builder.Services.AddScoped<ChampionCatalogService>();
 builder.Services.AddScoped<LeagueSettingsService>();
@@ -62,6 +65,9 @@ builder.Services.AddScoped<LeagueBuilderService>();
 builder.Services.AddScoped<LeagueMatchService>();
 builder.Services.AddScoped<LeagueHistoryService>();
 builder.Services.AddScoped<LeagueOverviewService>();
+// Rank badge pictures (Phase B): the catalog is one shared in-memory copy, the service changes the database and refreshes it.
+builder.Services.AddSingleton<RankBadgeCatalog>();
+builder.Services.AddScoped<LeagueRankBadgeService>();
 builder.Services.AddScoped<TeamBalancer>();
 builder.Services.AddScoped<ClashTeamBuilder>();
 
@@ -71,6 +77,19 @@ builder.Services.AddHttpClient<LeagueDiscordSender>();
 var app = builder.Build();
 
 await app.InitializeLeagueDatabaseAsync();
+
+// Fill the rank badge catalog from the database. A failure (for example the migration for the badge table was not made yet)
+// must not stop the site: every badge then shows its default picture.
+try
+{
+    using var badgeScope = app.Services.CreateScope();
+    await badgeScope.ServiceProvider.GetRequiredService<LeagueRankBadgeService>().ReloadCatalogAsync();
+}
+catch (Exception ex)
+{
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("RankBadges")
+        .LogWarning(ex, "Could not load the rank badges; every tier shows its default picture. Did you run: dotnet ef migrations add AddLeagueRankBadges ?");
+}
 
 // A League action missing from the role table is denied for everybody. Say so at start-up instead of leaving it to a 403 later.
 {

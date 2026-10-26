@@ -687,6 +687,20 @@ namespace LeagueTeamBuilder.Migrations
                     b.ToTable("LeagueProfileLanes");
                 });
 
+            modelBuilder.Entity("LeagueTeamBuilder.Models.LeagueRankBadge", b =>
+                {
+                    b.Property<int>("Tier")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Tier");
+
+                    b.ToTable("LeagueRankBadges");
+                });
+
             modelBuilder.Entity("LeagueTeamBuilder.Models.UserNotification", b =>
                 {
                     b.Property<int>("Id")

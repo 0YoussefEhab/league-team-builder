@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Iron">
+  <title>Iron</title>
+  <path d="M32 4 56 16v22c0 11-10 19-24 22C18 57 8 49 8 38V16z" fill="#8a93a5" fill-opacity=".14" stroke="#8a93a5" stroke-width="4" stroke-linejoin="round"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#8a93a5">1</text>
+</svg>

@@ -1,0 +1,4 @@
+/* Forest: Outfit (headings and text). Files go in wwwroot/lib/fonts/files/. */
+@font-face{font-family:"Outfit";font-style:normal;font-weight:400;font-display:swap;src:url("files/outfit-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Outfit";font-style:normal;font-weight:500;font-display:swap;src:url("files/outfit-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Outfit";font-style:normal;font-weight:800;font-display:swap;src:url("files/outfit-latin-800-normal.woff2") format("woff2")}

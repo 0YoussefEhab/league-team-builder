@@ -3,7 +3,7 @@
    and later (step 13c) pastes the answer back.
    13b: buildPrompt(). 13c: parseAnswer() reads the answer and checks it. Both are pure functions: data in, data out, no page
    access, so node can test them (LeagueTeamBuilder.Tests/js/league-stats-import.test.js). The page glue lives in league-history.js
-   and calls window.HfeStatsImport. */
+   and calls window.LtbStatsImport. */
 (function (root) {
     'use strict';
 
@@ -91,7 +91,7 @@
 
         L.push('ANSWER FORMAT');
         L.push('Plain text, nothing else is needed. One block, in this order:');
-        L.push('1. First line: HFE-STATS ' + FORMAT_VERSION);
+        L.push('1. First line: LTB-STATS ' + FORMAT_VERSION);
         L.push('2. A line: LENGTH mm:ss   (the match length shown on the screen)');
         L.push('3. One TOTALS line per team: TOTALS | team name | kills | deaths | assists');
         L.push('   Copy the three numbers the scoreboard shows for the team. Do not add them up yourself.');
@@ -110,7 +110,7 @@
         L.push('   Names are written in camelCase without spaces. Add only numbers you can really see.');
         L.push('');
         L.push('EXAMPLE (only to show the shape; these are not the values of this match)');
-        L.push('HFE-STATS ' + FORMAT_VERSION);
+        L.push('LTB-STATS ' + FORMAT_VERSION);
         L.push('LENGTH 27:14');
         L.push('TOTALS | ' + teams[0].name + ' | 23 | 36 | 22');
         L.push('ExampleOne | Ahri | ' + (hasLanes ? 'Mid' : '') + ' | 8 | 2 | 10 | 215 | 28311 | 17200 | 14500 | 22 | 4100 | wardsPlaced=12 | turretDamage=3300');
@@ -136,7 +136,7 @@
     //   champions: [{ id, name }]                       (active champions of the catalog)
     // }
     // Returns {
-    //   found: true when a HFE-STATS line or at least one line of data was seen,
+    //   found: true when an LTB-STATS (or old HFE-STATS) line or at least one line of data was seen,
     //   version, durationSeconds (or null),
     //   totals: [{ team, k, d, a }],
     //   players: [{ id, site, line, champion: {id,name}|null, lane: 0..4|null,
@@ -269,7 +269,7 @@
             if (!line) continue;
 
             // Header
-            var h = /^HFE-?STATS\b\s*[:=]?\s*v?(\d+)?/i.exec(line);
+            var h = /^(?:LTB|HFE)-?STATS\b\s*[:=]?\s*v?(\d+)?/i.exec(line);
             if (h) {
                 res.found = true;
                 res.version = h[1] ? parseInt(h[1], 10) : null;
@@ -506,5 +506,5 @@
 
     var api = { buildPrompt: buildPrompt, parseAnswer: parseAnswer, scoreReadiness: scoreReadiness, describeReadiness: describeReadiness, readNumber: readNumber, readLength: readLength, clean: clean, normalizeExtraName: normalizeExtraName, extraLabel: extraLabel, LIMITS: LIMITS, FORMAT_VERSION: FORMAT_VERSION };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
-    root.HfeStatsImport = api;
+    root.LtbStatsImport = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

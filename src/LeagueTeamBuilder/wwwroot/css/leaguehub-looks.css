@@ -1,0 +1,52 @@
+/* =====================================================================
+   League Team Builder: the looks (step C1). One block per look, tokens only. Load AFTER leaguehub-theme.css.
+   Steel is the default and is defined in leaguehub-theme.css. To add a look: add one block here, one entry in
+   Services/LeagueLooks.cs (All), and one fonts file under wwwroot/lib/fonts/. Nothing else changes.
+   Tokens a block leaves out fall back to the Steel value (custom properties resolve on <html>, so e.g. --lh-rule,
+   --lh-tile and --lh-tb use the look's own --lh-line and --lh-bg2).
+   ===================================================================== */
+
+[data-look="brutal"] {
+  --lh-bg: #0f0f10;
+  --lh-bg2: #1a1a1c;
+  --lh-ink: #f4f4f0;
+  --lh-mut: #a3a3a0;
+  --lh-line: #f4f4f0;            /* off-white: BORDERS only. Dividers and progress tracks use --lh-rule. */
+  --lh-a: #4d8dff;
+  --lh-b: #ff4d42;
+  --lh-gold: #ffd400;
+  --lh-ok: #2fd67b;
+  --lh-r: 0px;
+  --lh-rs: 0px;
+  --lh-disp: 'Archivo Black', Impact, sans-serif;
+  --lh-body: 'Barlow', system-ui, sans-serif;
+  --lh-dw: 400;                  /* Archivo Black is already heavy */
+  --lh-rule: #3a3a3d;
+  --lh-tile: var(--lh-bg2);
+  --lh-tsh: 6px 6px 0 var(--lh-gold);
+  --lh-tb: 2px solid var(--lh-line);
+  --lh-tbl: 2px solid var(--lh-line);
+  --lh-sky: none;
+}
+
+[data-look="forest"] {
+  --lh-bg: #0b1511;
+  --lh-bg2: #12211a;
+  --lh-ink: #e8f5ec;
+  --lh-mut: #86a393;
+  --lh-line: #23402f;
+  --lh-a: #4ade80;
+  --lh-b: #ff8a65;
+  --lh-gold: #f6d365;
+  --lh-r: 14px;
+  --lh-rs: 9px;
+  --lh-disp: 'Outfit', system-ui, sans-serif;
+  --lh-body: 'Outfit', system-ui, sans-serif;
+  --lh-dw: 800;
+  --lh-tile: color-mix(in srgb, var(--lh-bg2) 94%, var(--lh-a));
+  --lh-tsh: none;
+  --lh-tbl: 1px solid var(--lh-line);
+  --lh-sky:
+    repeating-radial-gradient(circle at 85% -10%, transparent 0 34px, color-mix(in srgb, var(--lh-a) 7%, transparent) 34px 35px),
+    radial-gradient(50% 40% at 0% 100%, color-mix(in srgb, var(--lh-a) 14%, transparent), transparent 70%);
+}

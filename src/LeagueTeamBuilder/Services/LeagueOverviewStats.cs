@@ -20,6 +20,9 @@ namespace LeagueTeamBuilder.Services
 
     public record OvGameCounts(int Customs, int Draft, int Aram, int Arena, int ClashGames);
 
+    // Wins per side in the two-side custom games (balance scoreboard). SideA = team index 0 (Team 1), SideB = index 1 (Team 2).
+    public record OvSideWins(int SideA, int SideB);
+
     // The Clash series result: Wins = games the Clash team (team index 0) won.
     public record OvClashRecord(int Wins, int Games);
 
@@ -83,6 +86,23 @@ namespace LeagueTeamBuilder.Services
                 }
             }
             return new OvGameCounts(customs, draft, aram, arena, clash);
+        }
+
+        // Balance scoreboard (C3): wins per side. Only finished CUSTOM games with two sides (ModeKey "normal" = draft, "aram");
+        // arena has many teams and Clash is our team against an opponent, so neither says anything about Side A vs Side B.
+        // A game with no recorded winner counts for neither side.
+        public static OvSideWins SideWins(IEnumerable<OvMatch> done)
+        {
+            int a = 0, b = 0;
+            foreach (var m in done)
+            {
+                if (m.Kind != LeagueMatchKind.Custom) continue;
+                var mode = (m.ModeKey ?? "").ToLowerInvariant();
+                if (mode != "normal" && mode != "aram") continue;
+                if (m.WinnerTeamIndex == 0) a++;
+                else if (m.WinnerTeamIndex == 1) b++;
+            }
+            return new OvSideWins(a, b);
         }
 
         // Per Clash event: games finished and games the Clash team (index 0) won.

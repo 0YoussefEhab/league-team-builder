@@ -1,0 +1,5 @@
+/* Brutal: Archivo Black (headings) + Barlow (text). Files go in wwwroot/lib/fonts/files/. */
+@font-face{font-family:"Archivo Black";font-style:normal;font-weight:400;font-display:swap;src:url("files/archivo-black-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:400;font-display:swap;src:url("files/barlow-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:500;font-display:swap;src:url("files/barlow-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:600;font-display:swap;src:url("files/barlow-latin-600-normal.woff2") format("woff2")}

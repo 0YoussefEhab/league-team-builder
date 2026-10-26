@@ -1,3 +1,4 @@
+@using System.Globalization
 @using LeagueTeamBuilder.Services
 @model LeagueOverviewModel
 @inject IPermissionChecker PermissionChecker
@@ -9,6 +10,11 @@
     // Step 8e: cards, tiles and names link to the player page only for a group that may open League > Player.
     var canPlayer = await PermissionChecker.CanAccessAsync(User, "League", "Player");
     string? PlayerUrl(int? id) => canPlayer && id != null ? Url.Action("Player", "League", new { id }) : null;
+    // Balance scoreboard: shown once at least one two-side custom game has a winner. Whole percents add up to 100.
+    var sideTotal = stats.SideAWins + stats.SideBWins;
+    var sideAPct = sideTotal == 0 ? 50 : (int)Math.Round(stats.SideAWins * 100.0 / sideTotal, MidpointRounding.AwayFromZero);
+    var sideBPct = 100 - sideAPct;
+    var sideGap = Math.Abs(stats.SideAWins - stats.SideBWins);
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
@@ -29,6 +35,23 @@
     <partial name="_LeagueNav" model='"home"' />
 
     <div class="lg-grid">
+        @if (sideTotal > 0)
+        {
+            <section class="lg-card lg-c12 lg-board" aria-labelledby="lg-ov-board">
+                <div class="lg-th"><div>
+                    <h2 class="lg-h2" id="lg-ov-board">Side balance</h2>
+                    <p class="lg-sub lg-flush">Wins for Side A (Team 1) and Side B (Team 2) in custom draft and ARAM games.</p>
+                </div></div>
+                <div class="lg-board-row">
+                    <div class="lg-board-side lg-board-a"><span class="lg-board-n">@stats.SideAWins</span><span class="lg-board-l">Side A wins</span></div>
+                    <div class="lg-board-gap"><span class="lg-board-gn">@sideGap</span><span class="lg-board-gl">game gap</span></div>
+                    <div class="lg-board-side lg-board-b"><span class="lg-board-n">@stats.SideBWins</span><span class="lg-board-l">Side B wins</span></div>
+                </div>
+                <div class="lg-board-meter" role="img" aria-label="Side A @sideAPct%, Side B @sideBPct%" style="--a:@(sideAPct.ToString(CultureInfo.InvariantCulture))%"><i></i></div>
+                <div class="lg-board-foot"><span>@sideAPct% Side A</span><span>@sideBPct% Side B</span></div>
+            </section>
+        }
+
         <section class="lg-card lg-c12" aria-labelledby="lg-ov-top">
             <div class="lg-th"><div>
                 <h2 class="lg-h2" id="lg-ov-top">Top ranked players</h2>
@@ -56,7 +79,7 @@
                                 <span><span class="lg-bd lg-bd-guest">Guest</span></span>
                             }
                             <h3>@p.Name</h3>
-                            <span class="lg-rkline"><img class="lg-rk" src="~/img/ranks/@LeagueViewText.RankImage(p.CurTier)" alt="" height="36" /> @LeagueViewText.RankText(p.CurTier, p.CurDiv)</span>
+                            <span class="lg-rkline"><img class="lg-rk" src="@Badges.Url(p.CurTier)" alt="" height="36" /> @LeagueViewText.RankText(p.CurTier, p.CurDiv)</span>
                         </a>
                     }
                 </div>
@@ -94,7 +117,7 @@
                                 <span><span class="lg-bd lg-bd-guest">Guest</span></span>
                             }
                             <h3>@p.Name</h3>
-                            <span class="lg-rkline"><img class="lg-rk lg-rk-s" src="~/img/ranks/@LeagueViewText.RankImage(p.CurTier)" alt="" height="22" /> @LeagueViewText.RankText(p.CurTier, p.CurDiv)</span>
+                            <span class="lg-rkline"><img class="lg-rk lg-rk-s" src="@Badges.Url(p.CurTier)" alt="" height="22" /> @LeagueViewText.RankText(p.CurTier, p.CurDiv)</span>
                         </a>
                     }
                 </div>
@@ -137,7 +160,7 @@
                             <span class="lg-nm">@m.Name</span>
                             @if (m.Tier != null)
                             {
-                                <span class="lg-rkrow"><img class="lg-rk lg-rk-s" src="~/img/ranks/@LeagueViewText.RankImage(m.Tier.Value)" alt="" height="22" /> @LeagueViewText.RankText(m.Tier.Value, m.Div)</span>
+                                <span class="lg-rkrow"><img class="lg-rk lg-rk-s" src="@Badges.Url(m.Tier.Value)" alt="" height="22" /> @LeagueViewText.RankText(m.Tier.Value, m.Div)</span>
                             }
                         </a>
                     }

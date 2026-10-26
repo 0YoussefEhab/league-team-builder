@@ -127,7 +127,10 @@
     }
 
     function rankIcon(key) {
-        return h('img', { class: 'lgb-ri', alt: '', height: '18', src: (cfg.iconBase || '') + key + '.png' });
+        // Addresses come from the server (cfg.icons, lower-case tier name to URL); an unknown key draws an empty box, not a broken request.
+        var src = cfg.icons && cfg.icons[key];
+        if (!src) return h('span', { class: 'lgb-ri', 'aria-hidden': 'true' });
+        return h('img', { class: 'lgb-ri', alt: '', height: '18', src: src });
     }
 
     function avatar(p, cls) {
@@ -1076,7 +1079,7 @@
             return { name: t.name, rows: rows };
         });
         var date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-        var spec = { title: 'Custom game · ' + mode.name, subtitle: date + ' · HFECloud', mapUrl: mode.mapUrl || null, teams: teams };
+        var spec = { title: 'Custom game · ' + mode.name, subtitle: date + ' · ' + (((window.LTB_SITE && window.LTB_SITE.name) || 'League Team Builder')), mapUrl: mode.mapUrl || null, teams: teams };
         if (onMap) {
             spec.mapAspect = mode.mapAspect || (16 / 9);
             spec.spots = (mode.spots || []).map(function (sp) { return { team: sp.team, slot: sp.slot, x: sp.x, y: sp.y }; });

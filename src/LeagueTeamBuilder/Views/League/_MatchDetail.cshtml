@@ -9,6 +9,8 @@
     var teamClass = Model.Teams.Count == 2 ? "lgh-teams2" : "lgh-teamsN";
     string[] laneNames = { "Top", "Jungle", "Mid", "ADC", "Support" };
     var champListId = "lgh-champs-" + Model.Id;
+    var rankIcons = Badges.ByKey();
+    string RankSrc(string key) => rankIcons.TryGetValue(key, out var u) ? u : RankBadgeCatalog.DefaultFolder + key + ".svg";
 }
 <article class="lgh-md" data-match-id="@Model.Id">
     <header class="lgh-md-head">
@@ -130,7 +132,7 @@
                                 @if (p.RankKey != null)
                                 {
                                     <span class="lgh-rank" title="@(p.PeakRankLabel != null ? "Peak: " + p.PeakRankLabel : "")">
-                                        <img src="~/img/ranks/@(p.RankKey).png" alt="" height="24" />
+                                        <img src="@RankSrc(p.RankKey)" alt="" height="24" />
                                         <span>@p.RankLabel</span>
                                     </span>
                                 }
@@ -519,7 +521,7 @@
                     and a value the AI left empty never erases what is already in the form.
                 </p>
                 <label class="lg-lbl lgh-imp-ans">Answer
-                    <textarea class="lg-input" rows="8" data-lgh-impans spellcheck="false" placeholder="HFE-STATS 1&#10;LENGTH 27:14&#10;TOTALS | ..."></textarea>
+                    <textarea class="lg-input" rows="8" data-lgh-impans spellcheck="false" placeholder="LTB-STATS 1&#10;LENGTH 27:14&#10;TOTALS | ..."></textarea>
                 </label>
                 <p class="lgh-imp-ok" data-lgh-impsum role="status"></p>
                 <ul class="lgh-imp-res" data-lgh-impres></ul>

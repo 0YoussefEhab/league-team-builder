@@ -23,3 +23,9 @@ secrets.json
 # OS
 .DS_Store
 Thumbs.db
+
+*.zip
+App_Data/
+*.db
+*.db-shm
+*.db-wal

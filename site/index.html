@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>League Team Builder: live demo</title>
+<meta name="description" content="Try League Team Builder in your browser. Invented players, nothing is saved.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%230e1013%27/%3E%3Cpath d=%27M6 6h6v14h12v6H6z%27 fill=%27%2319d3ff%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="app">
+<header class="bar">
+  <a class="brand" href="./">League Team Builder</a>
+  <div class="tabs" role="tablist" aria-label="Pages" id="tabs">
+    <button role="tab" id="t-builder" aria-controls="p-builder" aria-selected="true">Team builder</button>
+    <button role="tab" id="t-clash" aria-controls="p-clash" aria-selected="false" tabindex="-1">Clash</button>
+    <button role="tab" id="t-history" aria-controls="p-history" aria-selected="false" tabindex="-1">History</button>
+  </div>
+  <div class="looks" id="looks" role="group" aria-label="Look">
+    <button type="button" data-look="steel" aria-pressed="true">Steel</button>
+    <button type="button" data-look="brutal" aria-pressed="false">Brutal</button>
+    <button type="button" data-look="forest" aria-pressed="false">Forest</button>
+  </div>
+  <a class="gh" href="https://github.com/OWNER/league-team-builder" rel="noopener">GitHub</a>
+  <button type="button" class="btn main" id="tour-btn">Take the tour</button>
+</header>
+<p class="banner">Demo with invented players. Nothing is saved. <strong>Not endorsed by or affiliated with Riot Games.</strong></p>
+
+<main id="main" tabindex="-1">
+<noscript><p class="card nojs">This demo needs JavaScript. Turn it on in your browser, or read about the project on GitHub.</p></noscript>
+
+<section id="p-builder" role="tabpanel" aria-labelledby="t-builder">
+  <h1>Team builder</h1>
+  <div class="card">
+    <h2 id="players-head">1. Pick players <span class="mut" id="count">0 / 10</span></h2>
+    <div class="players" id="players"></div>
+    <p class="mut" id="msg" role="status"></p>
+  </div>
+  <div class="two">
+    <div class="card"><h2 id="mode-head">2. Game mode</h2>
+      <div class="opts" id="modes" role="radiogroup" aria-label="Game mode"></div></div>
+    <div class="card"><h2 id="bal-head">3. How to balance</h2>
+      <div class="opts" id="bals" role="radiogroup" aria-label="Balancing mode"></div></div>
+  </div>
+  <p><button type="button" class="btn main" id="gen" disabled>Generate teams</button></p>
+  <div class="two" id="result"></div>
+</section>
+
+<section id="p-clash" role="tabpanel" aria-labelledby="t-clash" hidden>
+  <h1>Clash</h1>
+  <div id="clash"></div>
+</section>
+<section id="p-history" role="tabpanel" aria-labelledby="t-history" hidden>
+  <h1>History</h1>
+  <div id="history"></div>
+</section>
+</main>
+<footer class="foot">League Team Builder is open source (MIT). Demo with invented players, nothing is saved. Map pictures © Riot Games. Not endorsed by or affiliated with Riot Games.</footer>
+</div>
+<script src="league-stats-import.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>

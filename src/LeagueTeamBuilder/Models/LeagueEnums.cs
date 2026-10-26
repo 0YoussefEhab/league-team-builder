@@ -1,7 +1,7 @@
 namespace LeagueTeamBuilder.Models
 {
     // Order matches the prototype's RANKS array (docs/league-team-builder-preview.html) and the
-    // badge files in wwwroot/img/ranks/{name-lowercase}.png. Stored as int; do not reorder.
+    // placeholder badges in wwwroot/img/ranks/default/{name-lowercase}.svg (RankBadgeCatalog). Stored as int; do not reorder.
     // Master and above have no division (LeagueProfile.CurDiv/PeakDiv stay null).
     public enum LeagueRank
     {

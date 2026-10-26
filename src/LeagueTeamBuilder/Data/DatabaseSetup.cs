@@ -47,6 +47,9 @@ namespace LeagueTeamBuilder.Data
             catch (Exception ex) { log.LogWarning(ex, "Could not switch SQLite to WAL mode; continuing in the default mode."); }
 
             await IdentitySeeder.SeedAsync(sp, app.Configuration, log);
+
+            // Step D1: fake League data, only when Demo:Seed is true (it never runs by default).
+            await DemoSeeder.SeedAsync(db, app.Configuration, log);
         }
     }
 }

@@ -61,7 +61,7 @@
                 }
                 <h2 id="lg-pl-name">@Model.Name</h2>
                 <div class="lg-rk-big">
-                    <img class="lg-rk" src="~/img/ranks/@LeagueViewText.RankImage(Model.CurTier)" alt="" height="64" />
+                    <img class="lg-rk" src="@Badges.Url(Model.CurTier)" alt="" height="64" />
                     <div>
                         <b>@LeagueViewText.RankText(Model.CurTier, Model.CurDiv)</b>
                         <small>Peak @LeagueViewText.RankText(Model.PeakTier, Model.PeakDiv) &middot; @LeaguePlayerRules.PlaceText(Model.Position, Model.TotalPlayers)</small>
@@ -86,7 +86,7 @@
                     <partial name="_RankSelect" model='new LeagueRankSelectModel("Peak rank", "PeakTier", Model.PeakTier, "PeakDiv", Model.PeakDiv)' />
                     <button class="lg-btn" type="submit">Save rank</button>
                 </form>
-                <p class="lg-sub lg-flush">The peak can't be lower than the current rank. Divisions are 1-4 below Master. This changes the league profile only, never the HFECloud account.</p>
+                <p class="lg-sub lg-flush">The peak can't be lower than the current rank. Divisions are 1-4 below Master. This changes the league profile only, never the user account.</p>
             </section>
         }
 
@@ -106,7 +106,7 @@
                     </div>
                     <button class="lg-btn" type="submit">Save names</button>
                 </form>
-                <p class="lg-sub lg-flush">Past matches show the new in-game name too. This changes the league profile only, never the HFECloud account.</p>
+                <p class="lg-sub lg-flush">Past matches show the new in-game name too. This changes the league profile only, never the user account.</p>
             </section>
         }
 

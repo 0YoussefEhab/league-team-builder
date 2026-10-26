@@ -15,6 +15,7 @@ namespace LeagueTeamBuilder.Controllers
     // manual Unlink for older links with no log entry.
     // Step 8e added EditPlayerRank (admin rank change from the Player page).
     // Step 12h2 added AutoSend (the Discord auto-send switches; page and save share the one action name).
+    // Phase B3 added the rank badge pictures (Badges, UploadBadge, RemoveBadge, ResetBadges; Admin only).
     [Authorize]
     public class LeagueSettingsController : Controller
     {
@@ -26,6 +27,7 @@ namespace LeagueTeamBuilder.Controllers
         private readonly LeagueGuestLinkService _links;
         private readonly LeagueProfileService _profiles;
         private readonly LeagueAutoSendService _autoSend;
+        private readonly LeagueRankBadgeService _badges;
 
         public LeagueSettingsController(
             ChampionCatalogService catalog,
@@ -35,8 +37,10 @@ namespace LeagueTeamBuilder.Controllers
             LeagueClashScheduleService clash,
             LeagueGuestLinkService links,
             LeagueProfileService profiles,
-            LeagueAutoSendService autoSend)
+            LeagueAutoSendService autoSend,
+            LeagueRankBadgeService badges)
         {
+            _badges = badges;
             _autoSend = autoSend;
             _catalog = catalog;
             _settings = settings;
@@ -334,8 +338,7 @@ namespace LeagueTeamBuilder.Controllers
 
         // ---- Player names (2026-10-18) ------------------------------------------------------------
         // Changes the in-game name and Riot ID of any league profile, member or guest, from the Player page. Its own
-        // permission action (LeagueSettings > EditPlayerNames), so a group gets it by a tick in Admin > Groups > Permissions
-        // (run "Rescan controllers" once). Never changes the HFECloud account (display name stays in Admin > Edit names).
+        // permission action (LeagueSettings > EditPlayerNames, see RolePermissions). Never changes the user account.
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPlayerNames(AdminNamesEdit form)
@@ -421,6 +424,28 @@ namespace LeagueTeamBuilder.Controllers
             TempData["Success"] = "Discord auto-send saved.";
             return RedirectToAction(nameof(AutoSend));
         }
+
+        // ---- Rank badge pictures (Phase B3) ----------------------------------------------------
+
+        public async Task<IActionResult> Badges() => View(await _badges.GetAllAsync());
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadBadge(LeagueRank tier, IFormFile? image) =>
+            Enum.IsDefined(tier)
+                ? DoneTo(await _badges.SetAsync(tier, image), nameof(Badges), BadgeAnchor(tier))
+                : DoneTo((false, "Unknown rank."), nameof(Badges));
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveBadge(LeagueRank tier) =>
+            Enum.IsDefined(tier)
+                ? DoneTo(await _badges.RemoveAsync(tier), nameof(Badges), BadgeAnchor(tier))
+                : DoneTo((false, "Unknown rank."), nameof(Badges));
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetBadges() =>
+            DoneTo(await _badges.ResetAllAsync(), nameof(Badges));
+
+        private static string BadgeAnchor(LeagueRank tier) => "badge-" + tier.ToString().ToLowerInvariant();
 
         private IActionResult DoneTo((bool Ok, string Message) result, string action, string? fragment = null)
         {

@@ -15,7 +15,7 @@
     'use strict';
 
     var W = 1280, H = 720;
-    var PALETTE = ['#4f7cff', '#ef5a4f', '#2fb67c', '#e6a828', '#a366ff', '#27b5d6', '#ff7ab6', '#9aa5b1'];
+    var PALETTE = ['#19d3ff', '#ff7a1a', '#2fb67c', '#e6a828', '#a366ff', '#27b5d6', '#ff7ab6', '#9aa5b1'];
     var INK = '#ffffff';
     var MUTED = 'rgba(255,255,255,.72)';
 
@@ -178,8 +178,8 @@
         canvas.height = H;
         var ctx = canvas.getContext('2d');
         var fam = getComputedStyle(document.body).fontFamily || 'sans-serif';
-        var display = cssVar('--hfe-font-display', '') || fam;
-        var accent = /^#[0-9a-f]{6}$/i.test(cssVar('--hfe-accent', '')) ? cssVar('--hfe-accent', '') : '#3b6cf6';
+        var display = cssVar('--lh-disp', '') || fam;
+        var accent = /^#[0-9a-f]{6}$/i.test(cssVar('--lh-a', '')) ? cssVar('--lh-a', '') : '#3b6cf6';
 
         var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
         var img = spec.mapUrl ? fonts.then(function () { return loadImage(spec.mapUrl); }) : fonts.then(function () { return null; });
@@ -388,7 +388,7 @@
         canvas.height = H;
         var ctx = canvas.getContext('2d');
         var fam = getComputedStyle(document.body).fontFamily || 'sans-serif';
-        var display = cssVar('--hfe-font-display', '') || fam;
+        var display = cssVar('--lh-disp', '') || fam;
         var box = mapBox(spec.mapAspect);
 
         // One pin per spot. A spot whose slot has no row (an ARAM slot nobody fills) is left out.

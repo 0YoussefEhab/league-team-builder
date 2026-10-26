@@ -26,7 +26,7 @@
 
     @if (p is null)
     {
-        <p class="lg-sub">Choose the HFECloud user who is <b>@Model.GuestName</b>. Only users whose group has League access are listed.</p>
+        <p class="lg-sub">Choose the user who is <b>@Model.GuestName</b>. Only active users who may open the League pages are listed.</p>
 
         <form method="get" class="lg-search" role="search">
             <input type="hidden" name="id" value="@Model.GuestId" />

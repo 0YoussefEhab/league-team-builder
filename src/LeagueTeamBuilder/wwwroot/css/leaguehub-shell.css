@@ -1,0 +1,135 @@
+/* =====================================================================
+   League Team Builder: page shell, base elements, Identity shims (step C1). Tokens only; no hard-coded colours.
+   Load order in _Layout: fonts -> leaguehub-theme.css -> leaguehub-looks.css -> this file -> @section Styles (League CSS).
+   Base element rules use :where(), so they have zero specificity: any class rule in the League CSS wins over them.
+   Sections: 1 base, 2 shell (top bar, footer), 3 base elements, 4 Bootstrap shims for the Identity pages, 5 motion.
+   ===================================================================== */
+
+/* ---------- 1. base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: dark; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--lh-bg); color: var(--lh-ink); font: 15px/1.55 var(--lh-body); min-height: 100vh; }
+:where(img) { max-width: 100%; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--lh-ink); outline-offset: 2px; }
+
+/* ---------- 2. shell ---------- */
+.lh-skip { position: absolute; left: -9999px; top: 0; z-index: 100; padding: 8px 14px; background: var(--lh-ink); color: var(--lh-bg);
+  font-weight: 700; border-radius: var(--lh-rs); text-decoration: none; }
+.lh-skip:focus { left: 12px; top: 12px; }
+.lh-sky { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: var(--lh-sky); }
+.lh-wrap { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: 16px 16px 0; }
+
+.lh-head { display: flex; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--lh-line); }
+.lh-brand { display: flex; align-items: center; gap: 10px; color: var(--lh-ink); text-decoration: none;
+  font: var(--lh-dw) 24px/1 var(--lh-disp); letter-spacing: .02em; }
+.lh-mark { position: relative; width: 26px; height: 26px; flex: none; }
+.lh-mark i { position: absolute; width: 16px; height: 16px; border-radius: min(4px, calc(var(--lh-rs) * 2)); }
+.lh-mark i:first-child { left: 0; top: 0; background: var(--lh-a); }
+.lh-mark i:last-child { right: 0; bottom: 0; background: var(--lh-b); opacity: .9; }
+
+.lh-tabs { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.lh-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; color: var(--lh-mut);
+  font: 600 15px/1.2 var(--lh-body); text-decoration: none; border-radius: var(--lh-rs); white-space: nowrap; }
+.lh-tab:hover, .lh-tab[aria-current="page"] { color: var(--lh-ink); }
+.lh-tab[aria-current="page"]::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -15px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--lh-a), var(--lh-b)); }
+.lh-count { min-width: 20px; padding: 0 6px; border-radius: min(99px, calc(var(--lh-r) * 2)); background: var(--lh-b); color: var(--lh-bg);
+  font: 700 12px/20px var(--lh-body); text-align: center; }
+
+.lh-tools { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin-left: auto; }
+.lh-look { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--lh-mut); font: 600 13px var(--lh-body); }
+.lh-look select { background: var(--lh-bg2); color: var(--lh-ink); border: var(--lh-tb); border-radius: var(--lh-rs); padding: 6px 10px;
+  font: 600 14px var(--lh-body); cursor: pointer; }
+.lh-user { max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--lh-mut); font-size: 14px; }
+.lh-signout { display: inline; margin: 0; }
+.lh-link { background: none; border: 0; padding: 6px 4px; color: var(--lh-a); font: 600 14px var(--lh-body); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; }
+.lh-tools a { color: var(--lh-a); font-weight: 600; text-underline-offset: 3px; }
+
+.lh-main { padding: 8px 0 24px; outline: none; }
+.lh-foot { margin-top: 24px; padding: 18px 0 28px; border-top: 1px solid var(--lh-rule); color: var(--lh-mut); font-size: 12px; }
+
+@media (max-width: 760px) {
+  .lh-tabs { order: 3; flex-basis: 100%; overflow-x: auto; padding-bottom: 6px; }
+  .lh-tab[aria-current="page"]::after { bottom: 0; }
+}
+
+/* ---------- 3. base elements (zero specificity) ---------- */
+:where(.lh-main) :where(a) { color: var(--lh-a); text-underline-offset: 3px; }
+:where(.lh-main) :where(h1) { font: var(--lh-dw) clamp(30px, 5vw, 48px)/1.05 var(--lh-disp); letter-spacing: .01em; margin: 24px 0 8px; }
+:where(.lh-main) :where(h2) { font: var(--lh-dw) 24px/1.1 var(--lh-disp); letter-spacing: .02em; margin: 0 0 12px; }
+:where(.lh-main) :where(h3) { font: var(--lh-dw) 18px/1.2 var(--lh-disp); margin: 0 0 10px; }
+:where(.lh-main) :where(p) { margin: 0 0 12px; }
+:where(.lh-main) :where(hr) { border: 0; border-top: 1px solid var(--lh-rule); margin: 14px 0; }
+:where(.lh-main) :where(table) { border-collapse: collapse; }
+:where(.lh-main) :where(th, td) { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--lh-rule); }
+:where(.lh-main) :where(th) { color: var(--lh-mut); font-size: 13px; font-weight: 600; }
+
+/* inputs without a class, and Bootstrap's .form-control (Identity pages) */
+:where(.lh-main) :where(input:not([class], [type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"], [type="submit"], [type="button"], [type="color"])),
+:where(.lh-main) :where(select:not([class])),
+:where(.lh-main) :where(textarea:not([class])),
+.lh-main .form-control {
+  font: inherit; color: var(--lh-ink); background: var(--lh-bg); border: var(--lh-tb); border-radius: var(--lh-rs);
+  padding: 8px 10px; max-width: 100%;
+}
+.lh-main .form-control { display: block; width: 100%; }
+.lh-main ::placeholder { color: var(--lh-mut); opacity: 1; }
+:where(.lh-main) :where(input[type="checkbox"], input[type="radio"]) { accent-color: var(--lh-a); }
+
+/* buttons without a class, and Bootstrap's .btn */
+:where(.lh-main) :where(button:not([class]), input[type="submit"]:not([class])),
+.lh-main .btn {
+  display: inline-block; font: 700 14px/1.2 var(--lh-body); padding: 9px 16px; border-radius: var(--lh-rs);
+  border: 1px solid var(--lh-line); background: none; color: var(--lh-ink); cursor: pointer; text-align: center; text-decoration: none;
+}
+:where(.lh-main) :where(button:not([class]), input[type="submit"]:not([class])):hover,
+.lh-main .btn:hover { border-color: var(--lh-ink); }
+:where(.lh-main) :where(button, input[type="submit"]):disabled, .lh-main .btn[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* ---------- 4. Bootstrap shims: only the classes the Identity UI pages use (Bootstrap is NOT loaded) ---------- */
+.lh-main .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; margin: 0; }
+.lh-main .col-md-4 { flex: 1 1 min(100%, 300px); max-width: 440px; }
+.lh-main .col-md-6 { flex: 1 1 min(100%, 300px); max-width: 560px; }
+.lh-main :is(.col-md-4, .col-md-6) > section {
+  background: var(--lh-tile); border: var(--lh-tb); border-left: var(--lh-tbl); box-shadow: var(--lh-tsh); border-radius: var(--lh-r); padding: 22px;
+}
+.lh-main .w-100 { width: 100%; }
+.lh-main .mb-3 { margin-bottom: 16px; }
+.lh-main .checkbox { margin: 0 0 16px; }
+.lh-main .form-label, .lh-main .form-check-label { color: var(--lh-ink); }
+.lh-main .form-check-input { width: 1.1em; height: 1.1em; margin-right: .4em; vertical-align: -.15em; }
+
+.lh-main .btn-primary { background: var(--lh-ink); color: var(--lh-bg); border-color: var(--lh-ink); }
+.lh-main .btn-primary:hover { filter: brightness(.92); }
+.lh-main .btn-lg { padding: 12px 20px; font-size: 16px; }
+.lh-main .btn-link { border-color: transparent; color: var(--lh-a); text-decoration: underline; text-underline-offset: 3px; }
+
+/* floating labels: pure CSS, so they work with JavaScript off. The inputs carry a placeholder, which makes :placeholder-shown work. */
+.lh-main .form-floating { position: relative; }
+.lh-main .form-floating > .form-control { height: 3.5rem; padding: 1.55rem .8rem .45rem; }
+.lh-main .form-floating > .form-control::placeholder { color: transparent; }
+.lh-main .form-floating > label { position: absolute; top: 0; left: 0; padding: 1rem .8rem; max-width: 100%; overflow: hidden; white-space: nowrap;
+  text-overflow: ellipsis; color: var(--lh-mut); pointer-events: none; transform-origin: 0 0; transition: transform .15s ease; }
+.lh-main .form-floating > .form-control:focus ~ label,
+.lh-main .form-floating > .form-control:not(:placeholder-shown) ~ label { transform: scale(.8) translateY(-.55rem) translateX(.15rem); }
+
+/* validation (ASP.NET adds field-validation-error, validation-summary-errors, input-validation-error) */
+.lh-main .text-danger, .lh-main .field-validation-error, .lh-main .validation-summary-errors { color: var(--lh-b); }
+.lh-main .text-success { color: var(--lh-ok); }
+.lh-main .text-muted { color: var(--lh-mut); }
+.lh-main .field-validation-error { display: block; margin-top: 4px; font-size: 13px; }
+.lh-main .validation-summary-errors ul { margin: 0 0 12px; padding-left: 18px; }
+.lh-main .input-validation-error { border-color: var(--lh-b); }
+
+/* status messages (_StatusMessage partial). The close button needs Bootstrap's script, so it is hidden. */
+.lh-main .alert { margin: 0 0 16px; padding: 12px 16px; border: 1px solid var(--lh-line); border-left: 4px solid var(--lh-a); border-radius: var(--lh-rs); background: var(--lh-tile); }
+.lh-main .alert-success { border-left-color: var(--lh-ok); }
+.lh-main :is(.alert-danger, .alert-warning) { border-left-color: var(--lh-b); }
+.lh-main .btn-close { display: none; }
+
+/* ---------- 5. motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

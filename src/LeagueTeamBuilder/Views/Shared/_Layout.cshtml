@@ -1,9 +1,13 @@
 @using System.Security.Claims
 @inject ILeagueNotifier Notifier
+@inject LookResolver Looks
+@inject IConfiguration Config
 @*
-    TEMPORARY layout (step A4). Plain on purpose: it only has to give the League views what they expect, which is
-    RenderSection("Styles") and RenderSection("Scripts"). Step C1 replaces it with the real shell (brand mark, tabs,
-    look picker, self-hosted fonts). The Identity login and register pages use it too (Areas/Identity/Pages/_ViewStart.cshtml).
+    The page shell (step C1). Replaces the temporary layout from A4.
+    Contract with the views: RenderSection("Styles") in <head> and RenderSection("Scripts") at the end of <body>. Every League view uses them.
+    The Identity login and register pages use this layout too (Areas/Identity/Pages/_ViewStart.cshtml).
+    The look is decided here, on the server (LookResolver: cookie, else the user's saved look, else Theme:DefaultLook), so <html data-look>
+    and the fonts link are right on first paint. Only the active look's fonts file is linked.
 *@
 @{
     var signedIn = User.Identity?.IsAuthenticated == true;
@@ -13,46 +17,77 @@
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrEmpty(userId)) unread = await Notifier.UnreadCountAsync(userId);
     }
+    var look = await Looks.ResolveAsync(Context);
+    var controller = ViewContext.RouteData.Values["controller"] as string ?? "";
+    var inLeague = controller.StartsWith("League", StringComparison.Ordinal);
+    var inNotifications = controller == "Notifications";
+    var inUsers = controller == "AdminUsers";
+    var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-look="@look.Key">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
     <title>@(ViewData["Title"] is string t && t.Length > 0 ? t + " - " : "")League Team Builder</title>
-    <link rel="stylesheet" href="~/css/temp-theme.css" asp-append-version="true" />
+    <link id="lh-fonts" rel="stylesheet" href="@Url.Content(look.FontsHref)" />
+    <link rel="stylesheet" href="~/css/leaguehub-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/leaguehub-looks.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/leaguehub-shell.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header class="tmp-bar">
-        <a class="tmp-brand" href="/">League Team Builder</a>
-        @if (signedIn)
-        {
-            <a href="/League">League</a>
-            <a href="/Notifications">Notifications@(unread > 0 ? " (" + unread + ")" : "")</a>
-            @if (User.IsInRole("Admin"))
-            {
-                <a href="/Admin/Users">Users</a>
-            }
-        }
-        <span class="tmp-spacer"></span>
-        @if (signedIn)
-        {
-            <span>@(User.Identity?.Name)</span>
-            <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/">
-                <button type="submit">Sign out</button>
-            </form>
-        }
-        else
-        {
-            <a href="/Identity/Account/Login">Sign in</a>
-            <a href="/Identity/Account/Register">Register</a>
-        }
-    </header>
-    <main class="tmp-main">
-        @RenderBody()
-    </main>
-    <footer class="tmp-foot">Not endorsed by or affiliated with Riot Games.</footer>
+    <a class="lh-skip" href="#lh-main">Skip to content</a>
+    <div class="lh-sky" aria-hidden="true"></div>
+    <div class="lh-wrap">
+        <header class="lh-head">
+            <a class="lh-brand" href="~/"><span class="lh-mark" aria-hidden="true"><i></i><i></i></span>League Team Builder</a>
+            <nav class="lh-tabs" aria-label="Site">
+                @if (signedIn)
+                {
+                    <a class="lh-tab" aria-current="@(inLeague ? "page" : null)" href="~/League">League</a>
+                    <a class="lh-tab" aria-current="@(inNotifications ? "page" : null)" href="~/Notifications"><span>Notifications</span>@if (unread > 0) { <span class="lh-count">@unread<span class="visually-hidden"> unread</span></span> }</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a class="lh-tab" aria-current="@(inUsers ? "page" : null)" href="~/Admin/Users">Users</a>
+                    }
+                }
+            </nav>
+            <div class="lh-tools">
+                <form class="lh-look" method="post" action="@Url.Content("~/Look/Set")" data-lh-look-form>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <label for="lh-look-select">Look</label>
+                    <select id="lh-look-select" name="look">
+                        @foreach (var l in LeagueLooks.All)
+                        {
+                            <option value="@l.Key" data-fonts="@Url.Content(l.FontsHref)" selected="@(l.Key == look.Key)">@l.Name</option>
+                        }
+                    </select>
+                    <button type="submit" class="lh-link" data-lh-look-apply>Apply</button>
+                </form>
+                @if (signedIn)
+                {
+                    <span class="lh-user">@(User.Identity?.Name)</span>
+                    <form class="lh-signout" method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/">
+                        <button type="submit" class="lh-link">Sign out</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="~/Identity/Account/Login">Sign in</a>
+                    <a href="~/Identity/Account/Register">Register</a>
+                }
+            </div>
+        </header>
+        <main id="lh-main" class="lh-main" tabindex="-1">
+            @RenderBody()
+        </main>
+        <footer class="lh-foot">Not endorsed by or affiliated with Riot Games.</footer>
+    </div>
+    <script>window.LTB_SITE = { name: @Json.Serialize(string.IsNullOrWhiteSpace(Config["Site:Name"]) ? "League Team Builder" : Config["Site:Name"]!.Trim()) };</script>
+    <script src="~/js/lh-shell.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

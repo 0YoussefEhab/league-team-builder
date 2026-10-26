@@ -11,12 +11,16 @@ namespace LeagueTeamBuilder.Services
     {
         private readonly HttpClient _http;
         private readonly string? _webhookUrl;
+        private readonly string _botName;
         private readonly ILogger<LeagueDiscordSender> _logger;
 
         public LeagueDiscordSender(HttpClient http, IConfiguration config, ILogger<LeagueDiscordSender> logger)
         {
             _http = http;
             _logger = logger;
+            // The name Discord shows for the post: Site:Name from appsettings (default "League Team Builder"). Discord allows up to 80 characters.
+            var site = config["Site:Name"];
+            _botName = string.IsNullOrWhiteSpace(site) ? "League Team Builder" : (site.Trim().Length > 80 ? site.Trim()[..80] : site.Trim());
             var url = config["Discord:LeagueWebhookUrl"];
             _webhookUrl = DiscordWebhook.IsValidUrl(url) ? url!.Trim() : null;
         }
@@ -31,7 +35,7 @@ namespace LeagueTeamBuilder.Services
                 using var form = new MultipartFormDataContent();
                 var payload = JsonSerializer.Serialize(new
                 {
-                    username = "HFE League",
+                    username = _botName,
                     allowed_mentions = new { parse = Array.Empty<string>() },
                     attachments = new[] { new { id = 0, filename = fileName } },
                 });

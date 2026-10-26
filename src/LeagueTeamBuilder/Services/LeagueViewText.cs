@@ -22,9 +22,6 @@ namespace LeagueTeamBuilder.Services
         public static string RankText(LeagueRank rank, int? div) =>
             LeagueRankRules.HasDivision(rank) && div is >= 1 and <= 4 ? $"{rank} {Roman[div.Value]}" : rank.ToString();
 
-        // File name under /img/ranks/.
-        public static string RankImage(LeagueRank rank) => rank.ToString().ToLowerInvariant() + ".png";
-
         public static string LaneName(LeagueLane lane) => lane switch
         {
             LeagueLane.Top => "Top",

@@ -8,7 +8,7 @@ namespace LeagueTeamBuilder.Services
         public const int Width = 1280;
         public const int Height = 720;
         public const int MaxBytes = 8 * 1024 * 1024;   // Discord's limit for a webhook upload is about 8-10 MB
-        public const string DefaultFileName = "hfe-league.png";
+        public const string DefaultFileName = "ltb-league.png";
 
         private static readonly byte[] PngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 

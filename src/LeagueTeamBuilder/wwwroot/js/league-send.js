@@ -31,7 +31,7 @@
         var target = url();
         if (!target) return Promise.reject(new Error('Sending to Discord is not set up.'));
         var fd = new FormData();
-        fd.append('file', blob, fileName || 'hfe-league.png');
+        fd.append('file', blob, fileName || 'ltb-league.png');
         var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
         return fetch(target, {
             method: 'POST', credentials: 'same-origin',

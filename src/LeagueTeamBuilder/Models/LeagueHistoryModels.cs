@@ -102,7 +102,7 @@ namespace LeagueTeamBuilder.Models
         public string? PlayedLaneLabel { get; set; }
         public string? AvatarUrl { get; set; }
         public string Initial { get; set; } = "?";
-        // Ranks the teams were balanced on (snapshot). RankKey names the badge file (e.g. "gold").
+        // Ranks the teams were balanced on (snapshot). RankKey is the lower-case tier name (e.g. "gold"); the picture comes from RankBadgeCatalog.
         public string? RankKey { get; set; }
         public string? RankLabel { get; set; }
         public string? PeakRankLabel { get; set; }

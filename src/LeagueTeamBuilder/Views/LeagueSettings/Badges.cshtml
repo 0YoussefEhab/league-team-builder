@@ -1,0 +1,69 @@
+@model List<LeagueRankBadgeService.BadgeRow>
+@{
+    ViewData["Title"] = "League rank badges";
+    var anyUploaded = Model.Any(b => b.UploadedUrl is not null);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
+}
+
+@* Phase B3. Plain markup on the existing league.css classes (styled further in C5). Admin only (RolePermissions). *@
+<div class="lg-page">
+    <header class="lg-top">
+        <div>
+            <span class="lg-eyebrow">League</span>
+            <h1 class="lg-h1">Rank <em>badges</em></h1>
+        </div>
+    </header>
+    <partial name="_LeagueNav" model='"settings"' />
+    <p class="lg-back"><a asp-action="Index">&larr; League settings</a></p>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="lg-alert lg-ok" role="status">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="lg-alert lg-err" role="alert">@err</div>
+    }
+
+    <section class="lg-card">
+        <h2 class="lg-h2">Picture per rank</h2>
+        <p class="lg-sub">Shown next to every rank on the site and in the team builder. JPG, PNG or WebP, up to 1 MB, between 16 and 2048 pixels on each side. SVG is not accepted. A rank without an upload shows the default picture.</p>
+        <div class="lg-grid3">
+            @foreach (var b in Model)
+            {
+                var key = b.Tier.ToString().ToLowerInvariant();
+                <div class="lg-mapcard" id="badge-@key">
+                    <strong>@b.Tier</strong>
+                    <img class="lg-bprev" src="@b.Url" alt="@b.Tier badge preview" height="64" />
+                    <span class="lg-sub">@(b.UploadedUrl is null ? "Default picture" : "Your picture")</span>
+                    <form method="post" asp-action="UploadBadge" enctype="multipart/form-data" class="lg-mapform">
+                        <input type="hidden" name="tier" value="@((int)b.Tier)" />
+                        <label class="lg-lbl" for="badge-file-@key">@(b.UploadedUrl is null ? "Upload" : "Change") picture for @b.Tier</label>
+                        <input id="badge-file-@key" name="image" type="file" class="lg-input" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required />
+                        <button class="lg-btn" type="submit">Upload</button>
+                    </form>
+                    @if (b.UploadedUrl is not null)
+                    {
+                        <form method="post" asp-action="RemoveBadge" onsubmit="return confirm('Go back to the default @b.Tier picture?');">
+                            <input type="hidden" name="tier" value="@((int)b.Tier)" />
+                            <button class="lg-btn lg-btn-danger" type="submit">Remove picture</button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    @if (anyUploaded)
+    {
+        <section class="lg-card">
+            <h2 class="lg-h2">Reset all</h2>
+            <p class="lg-sub">Delete every uploaded picture and go back to the default ones.</p>
+            <form method="post" asp-action="ResetBadges" onsubmit="return confirm('Remove every uploaded rank picture?');">
+                <button class="lg-btn lg-btn-danger" type="submit">Reset all to default</button>
+            </form>
+        </section>
+    }
+</div>

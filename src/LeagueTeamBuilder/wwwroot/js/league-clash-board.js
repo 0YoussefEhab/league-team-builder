@@ -161,7 +161,10 @@
     }
 
     function rankIcon(key) {
-        return h('img', { class: 'lgb-ri', alt: '', height: '18', src: (cfg.iconBase || '') + key + '.png' });
+        // Addresses come from the server (cfg.icons, lower-case tier name to URL); an unknown key draws an empty box, not a broken request.
+        var src = cfg.icons && cfg.icons[key];
+        if (!src) return h('span', { class: 'lgb-ri', 'aria-hidden': 'true' });
+        return h('img', { class: 'lgb-ri', alt: '', height: '18', src: src });
     }
 
     function avatar(p, cls) {
@@ -399,7 +402,7 @@
         var parts = [];
         if (n <= max) parts.push('Game ' + n + ' of ' + max);
         parts.push(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }));
-        parts.push('HFECloud');
+        parts.push((window.LTB_SITE && window.LTB_SITE.name) || 'League Team Builder');
         var title = cfg.eventTitle ? 'Clash \u00b7 ' + cfg.eventTitle : 'Clash' + (cfg.modeName ? ' \u00b7 ' + cfg.modeName : '');
         var spec = { title: title, subtitle: parts.join(' \u00b7 '), mapUrl: cfg.mapUrl || null, teams: [{ name: activeTeamName(), rows: rows }] };
         if (onMap) {

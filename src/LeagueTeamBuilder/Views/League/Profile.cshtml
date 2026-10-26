@@ -34,14 +34,14 @@
         <div class="lg-alert lg-err" role="alert">Please fix the highlighted fields and save again.</div>
     }
 
-    <p class="lg-sub">This profile is only used by the League team builder. It is separate from your HFECloud profile: changing one never changes the other.</p>
+    <p class="lg-sub">This profile is only used by the League team builder. It is separate from your account profile (name and picture): changing one never changes the other.</p>
 
     @* Shown on first visit and kept afterwards as "copy again" (spec section 9). *@
     @{
         <div class="lg-card lg-copy">
             <div>
-                <h2 class="lg-h2 lg-flush-h">@(Model.IsNew ? "Start from your HFECloud profile?" : "Copy from your HFECloud profile again?")</h2>
-                <span class="lg-sub lg-flush">Fills in your name and picture once. Nothing is saved until you press Save, and later changes to your HFECloud profile never change this one.</span>
+                <h2 class="lg-h2 lg-flush-h">@(Model.IsNew ? "Start from your account profile?" : "Copy from your account profile again?")</h2>
+                <span class="lg-sub lg-flush">Fills in your name and picture once. Nothing is saved until you press Save, and later changes to your account profile never change this one.</span>
                 @if (Model.CopiedFromMain)
                 {
                     <span class="lg-ok-text" role="status">Name and picture copied into the form below. Press Save to keep them.</span>

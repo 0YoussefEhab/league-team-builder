@@ -11,7 +11,7 @@
     var heading = Model.Filter switch { LeagueGuestFilter.Linked => "Linked", LeagueGuestFilter.All => "All", _ => "Guests" };
     string LaneLabel(LeagueLane l) => l == LeagueLane.Adc ? "ADC" : l.ToString();
     string Rank(LeagueRank r, int? d) => r + (d is int n ? " " + n : "");
-    string Badge(LeagueRank r) => Url.Content("~/img/ranks/" + r.ToString().ToLowerInvariant() + ".png");
+    string Badge(LeagueRank r) => Badges.Url(r);
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/league.css" asp-append-version="true" />
@@ -45,7 +45,7 @@
     {
         <p class="lg-sub"><a asp-action="LinkedGuests">Link log</a>: every guest link, with Undo link and Change user.</p>
     }
-    <p class="lg-sub">Guests are players without an HFECloud account. They are always treated as free for Clash. When a guest gets an account, use Link to user to turn them into a member.</p>
+    <p class="lg-sub">Guests are players without an account. They are always treated as free for Clash. When a guest gets an account, use Link to user to turn them into a member.</p>
 
     <form method="post" asp-action="AddGuest" class="lg-card">
         <h2 class="lg-h2">Add a guest</h2>

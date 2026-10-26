@@ -14,7 +14,7 @@
     {
         generateUrl = Url.Action("Generate", "League"),
         guestsUrl = canGuests ? Url.Action("Guests", "LeagueSettings") : null,
-        iconBase = Url.Content("~/img/ranks/"),
+        icons = Badges.ByKey(),
         modes = Model.Modes,
         players = Model.Players,
         lanes = Model.Lanes,
@@ -70,7 +70,7 @@
 @section Scripts {
     <script src="~/js/league-export.js" asp-append-version="true"></script>
     <script src="~/js/league-time.js" asp-append-version="true"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="~/lib/html2canvas/html2canvas.min.js"></script>
     <script src="~/js/league-send.js" asp-append-version="true"></script>
     <script src="~/js/league-result-image.js" asp-append-version="true"></script>
     <script src="~/js/league-auto-send.js" asp-append-version="true"></script>

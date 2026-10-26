@@ -50,7 +50,8 @@ namespace LeagueTeamBuilder.Services
                 "Modes", "SaveModes", "UploadMap", "RemoveMap", "SaveSpots",
                 "Tiers", "AddTier", "RenameTier", "MoveTier", "RemoveTier",
                 "LinkedGuests", "UnlinkGuest", "UndoGuestLink",
-                "AutoSend");
+                "AutoSend",
+                "Badges", "UploadBadge", "RemoveBadge", "ResetBadges");
             Add("LeagueMatch", AppRoles.Admin, "BackfillMvps");
 
             return t;

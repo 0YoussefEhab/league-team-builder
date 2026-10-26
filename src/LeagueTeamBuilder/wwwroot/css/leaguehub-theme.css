@@ -1,0 +1,39 @@
+/* =====================================================================
+   League Team Builder: theme tokens (step C1).
+   A "look" is ONLY a block of the tokens below. Steel is the default and lives here (on :root);
+   Brutal and Forest override it in leaguehub-looks.css, which must load AFTER this file.
+   <html data-look="..."> is written by _Layout on the server, so the first paint is already right.
+
+   Token names (prototype short name -> app name):
+     bg bg2 ink mut line a b gold ok r rs disp body dw rule tile tsh tb tbl sky  ->  --lh-*
+   Side A and Side B are the two teams. Gold is reserved for MVP.
+
+   ===================================================================== */
+
+/* ---------- 1. tokens: Steel (default) ---------- */
+:root,
+[data-look="steel"] {
+  --lh-bg: #0e1013;
+  --lh-bg2: #171a1f;
+  --lh-ink: #f2f4f7;
+  --lh-mut: #8d95a3;
+  --lh-line: #2a2f38;
+  --lh-a: #19d3ff;
+  --lh-b: #ff7a1a;
+  --lh-gold: #ffd23f;
+  --lh-ok: #4ade9a;
+  --lh-r: 3px;
+  --lh-rs: 2px;
+  --lh-disp: 'Chakra Petch', system-ui, sans-serif;
+  --lh-body: 'Barlow', system-ui, sans-serif;
+  --lh-dw: 700;
+  --lh-rule: var(--lh-line);
+  --lh-tile: var(--lh-bg2);
+  --lh-tsh: none;
+  --lh-tb: 1px solid var(--lh-line);
+  --lh-tbl: 4px solid var(--lh-a);
+  --lh-sky:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.028) 0 2px, transparent 2px 16px),
+    linear-gradient(115deg, transparent 62%, color-mix(in srgb, var(--lh-a) 14%, transparent) 62% 64%, transparent 64% 70%,
+      color-mix(in srgb, var(--lh-b) 14%, transparent) 70% 71%, transparent 71%);
+}

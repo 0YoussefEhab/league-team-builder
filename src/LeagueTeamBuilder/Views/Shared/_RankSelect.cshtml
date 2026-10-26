@@ -14,7 +14,7 @@
         <select id="@id" name="@Model.TierName" class="lg-select" data-lg-rank-select aria-labelledby="@(id)-lbl">
             @foreach (var r in Enum.GetValues<LeagueRank>())
             {
-                <option value="@((int)r)" data-img="@Url.Content("~/img/ranks/" + r.ToString().ToLowerInvariant() + ".png")" selected="@(r == Model.Tier)">@r</option>
+                <option value="@((int)r)" data-img="@Badges.Url(r)" selected="@(r == Model.Tier)">@r</option>
             }
         </select>
         <select name="@Model.DivName" class="lg-select lg-div" data-lg-div aria-label="@Model.Label division">

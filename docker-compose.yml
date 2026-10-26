@@ -1,0 +1,25 @@
+# League Team Builder, web edition:  docker compose up --build   then open http://localhost:8080
+# Settings come from a file named .env next to this one (copy .env.example). Never commit .env.
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # First Admin. Used only while the site has no active Admin; an existing password is never changed.
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-}
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-}
+      Site__Name: ${SITE_NAME:-League Team Builder}
+      Theme__DefaultLook: ${DEFAULT_LOOK:-steel}
+      Demo__Seed: ${DEMO_SEED:-false}
+      Demo__Reset: ${DEMO_RESET:-false}
+      # Behind a reverse proxy that handles https (Caddy, nginx, Cloudflare, a hosting service), uncomment so the site
+      # sees the real address and marks its cookies Secure. Do NOT set it when the container is reached directly.
+      # ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    volumes:
+      # Database and uploads, in one place. `docker compose down` keeps it; `docker compose down -v` deletes it.
+      - ltb-data:/data
+    restart: unless-stopped
+
+volumes:
+  ltb-data:

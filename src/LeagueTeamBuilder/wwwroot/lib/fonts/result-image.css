@@ -1,0 +1,7 @@
+/* Result picture fonts: Inter + Poppins (SIL OFL), Latin subset. Files go in wwwroot/lib/fonts/files/ (see EXTRACTION-PLAN.md, Inter / Poppins step). */
+@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:url("files/inter-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:url("files/inter-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;src:url("files/inter-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:800;font-display:swap;src:url("files/inter-latin-800-normal.woff2") format("woff2")}
+@font-face{font-family:"Poppins";font-style:normal;font-weight:800;font-display:swap;src:url("files/poppins-latin-800-normal.woff2") format("woff2")}
+@font-face{font-family:"Poppins";font-style:normal;font-weight:900;font-display:swap;src:url("files/poppins-latin-900-normal.woff2") format("woff2")}

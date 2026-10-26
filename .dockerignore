@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+.git/
+.vs/
+tests/
+docs/
+**/App_Data/
+**/wwwroot/uploads/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.env
